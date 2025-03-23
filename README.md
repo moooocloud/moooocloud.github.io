@@ -4,3 +4,4 @@
 - [於是，你睜開了眼。](https://moooocloud.github.io/cloudtrpg/%E7%9D%9C%E7%9C%BC_%E6%B5%B7%E5%85%89.html)
 - [En;call（未修）](https://moooocloud.github.io/cloudtrpg/Encall.html)
 - [小時候的我就拜託了（未修）](https://moooocloud.github.io/cloudtrpg/%E5%B0%8F%E6%8B%9C%E8%A8%97.html)
+- [小小混亂！](https://moooocloud.github.io/cloudtrpg/%E5%B0%8F%E5%B0%8F%E6%B7%B7%E4%BA%82%EF%BC%81.html)
