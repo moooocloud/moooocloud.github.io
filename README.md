@@ -1,6 +1,6 @@
 # 莫昀的trpg團錄
 
-### 海光（街默認有若鷲劇透）
+### 海光（皆默認有若鷲劇透）
 - [初戀性斯德哥爾摩症候群](https://moooocloud.github.io/初戀性.html)
 - [於是，你睜開了眼。](https://moooocloud.github.io/%E7%9D%9C%E7%9C%BC_%E6%B5%B7%E5%85%89.html)
 - [En;call（未修）](https://moooocloud.github.io/Encall.html)
