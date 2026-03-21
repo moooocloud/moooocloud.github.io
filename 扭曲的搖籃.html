@@ -1,0 +1,1308 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>扭曲的搖籃</title><style>
+        :root {
+            --bg-color: #f4f1ea;
+            --container-bg: #ffffff;
+            --primary-color: #a67c52;
+            --secondary-color: #8fa4b3;
+            --text-color: #4a4a4a;
+            --border-color: #dcdcdc;
+            --bar-bg: #f4f1ea;
+            --edit-color: #e67e22;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --primary-color: #c9ad93;
+            --text-color: #d1d1d1;
+            --border-color: #333333;
+            --bar-bg: #121212;
+        }
+
+        @media print {
+            @page { margin: 1.2cm; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .container { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; border: none !important; }
+            .no-print, .mode-switcher, .edit-btn, .add-ho-btn { display: none !important; }
+            #output { display: block !important; border: none !important; padding: 0 !important; }
+            .block-styled, .ending-text, .info-bar { break-inside: avoid; }
+        }
+
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 40px 20px; margin: 0; line-height: 1.8; transition: all 0.3s ease; }
+        .container { max-width: 1100px; margin: auto; background: var(--container-bg); padding: 45px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.05); }
+        .theme-switch { position: fixed; top: 20px; right: 20px; padding: 10px 18px; border-radius: 30px; border: 1.5px solid var(--primary-color); background: var(--container-bg); color: var(--primary-color); cursor: pointer; font-weight: bold; z-index: 100; }
+
+        .mode-switcher { display: inline-flex; background: #eeeae3; padding: 5px; border-radius: 50px; border: 1px solid var(--border-color); margin-right: 20px; }
+        .mode-btn { padding: 10px 25px; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; background: transparent; color: var(--text-color); opacity: 0.6; font-size: 15px; }
+        .mode-btn.active { background: var(--primary-color); color: white; opacity: 1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        h1.tool-title { text-align: center; color: var(--primary-color); margin-bottom: 45px; font-size: 32px; letter-spacing: 2px; font-weight: 900; }
+        label { display: block; font-weight: bold; margin-bottom: 12px; color: var(--primary-color); font-size: 16px; }
+        input[type="text"], textarea { width: 100%; padding: 15px 20px; border: 1.5px solid var(--border-color); border-radius: 12px; box-sizing: border-box; background-color: #fafafa; color: #4a4a4a; margin-bottom: 15px; font-size: 15px; transition: 0.3s; }
+        [data-theme="dark"] input[type="text"], [data-theme="dark"] textarea { background-color: #2a2a2a; color: #eee; border-color: #444; }
+
+        .row { display: flex; gap: 40px; margin-bottom: 25px; align-items: flex-start; width: 100%; }
+        .col-half { flex: 1; min-width: 0; }
+
+        .color-pill {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 8px 15px;
+            border-radius: 20px; /* 稍微減小圓角，讓長方形感出來一點點 */
+            border: 1.2px solid var(--border-color);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        /* 統一設定面板標題與上方 label 的風格 */
+        .config-title {
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            font-size: 16px;
+            display: block;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(166, 124, 82, 0.2); /* 淡淡的分隔線 */
+            margin-top: 30px;
+        }
+
+        [data-theme="dark"] .color-pill {
+            background: #2a2a2a;
+        }
+        input[type="color"] { width: 22px; height: 22px; border: none; cursor: pointer; background: none; padding: 0; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .hex-field { border: none !important; background: transparent !important; margin-bottom: 0 !important; padding: 0 !important; width: 75px !important; font-family: monospace; font-size: 14px !important; color: inherit !important; font-weight: bold; }
+
+        #ho-editor-list { margin-bottom: 15px; }
+        .ho-edit-item { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .ho-tag-input { width: 80px !important; flex-shrink: 0; text-align: center; }
+        .pl-name-input { flex: 1; min-width: 0; }
+
+        .add-ho-btn { background: var(--container-bg); color: var(--primary-color); border: 1.5px solid var(--primary-color); padding: 8px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 5px; transition: 0.2s; }
+
+        .channel-item { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .channel-name { min-width: 80px; font-weight: bold; color: var(--primary-color); }
+        .channel-tag-input { width: 150px !important; margin: 0 !important; padding: 8px 15px !important; }
+
+        #output { margin-top: 60px; padding: 50px; border: 1px solid var(--border-color); background: var(--container-bg); display: none; border-radius: 25px; }
+        .log-item { position: relative; }
+        .edit-tools{
+            position:absolute;
+            left:-55px;
+            top:10px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            opacity:0;
+        }
+
+        [data-mode="edit"] .log-item:hover .edit-tools{
+            opacity:1;
+        }
+
+        .edit-tools button{
+            width:35px;
+            height:35px;
+            border-radius:50%;
+            color:#e67e22;
+            border:1.5px solid var(--border-color);
+            background:var(--container-bg);
+            cursor:pointer;
+            font-size:15px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .text-content { 
+            outline: none;
+            display: block;
+            width: 100%;
+        }
+            [data-mode="edit"] .text-content:focus { background: rgba(230, 126, 34, 0.05); border-radius: 8px; }
+
+        .log-line { margin-bottom: 1.8em; word-wrap: break-word; font-size: 15px; }
+        .char-name-label { display: block; font-weight: bold; margin-bottom: 2px; font-size: 0.95em; }
+        .other-bubble { width: fit-content; max-width: 75%; margin-left: auto; padding: 15px 25px; border-radius: 22px 22px 4px 22px; text-align: right; font-size: 15px; margin-bottom: 1.6em; border-right: 6px solid var(--secondary-color); background: var(--bar-bg); }
+        .block-styled { padding: 30px 35px; border-radius: 15px; margin: 20px 0; border-left: 10px solid ; transition: none; }
+        .info-tag { font-weight: 400; color: var(--primary-color); font-size: 13px; display: block; margin-bottom: 12px; letter-spacing: 1px; }
+
+        /* 當區塊被標記為合併時：去掉上方圓角、去掉上方邊框、去掉上方間距 */
+        .block-styled[data-merged="true"] {
+            margin-top: 0 !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-top: none !important;
+            padding-top: 5px !important; /* 縮短內部頂部間距 */
+        }
+
+        /* 隱藏合併區塊內重複的標籤（例如：情報、系統） */
+        .block-styled[data-merged="true"] .info-tag {
+            display: none;
+        }
+
+        /* 處理被合併者的「前一個元素」：去掉下方圓角、去掉下方間距 */
+        .log-item:has(+ .log-item .block-styled[data-merged="true"]) .block-styled {
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 5px !important;
+        }
+
+        /* 讓資訊列的間距與字級完全貼合內文 */
+        .info-bar {
+           padding: 10px 0;    /* 縮小上下內距 */
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 40px; /* 這就是分隔線上的那行空白感 */
+            margin-bottom: 40px;  /* 分隔線下方的空白，與內文區隔 */
+        }
+
+        .info-line {
+            display: flex;
+            align-items: baseline; /* 讓文字對齊基準線 */
+            margin-bottom: 4px !important; /* 強制縮小每一行的下間距 */
+            font-size: 15px !important; /* 調整成跟內文一樣大 */
+            line-height: 1.6 !important; /* 緊湊的行高 */
+            font-weight: normal;
+        }
+
+        .info-line strong {
+            min-width: 50px; /* 標籤寬度 */
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-weight: 400;
+        }
+
+        .file-upload-wrapper { text-align: center; padding: 55px 30px; border: 2.5px dashed var(--border-color); border-radius: 20px; background: rgba(0,0,0,0.01); margin: 40px 0; transition: 0.3s; }
+        .file-upload-wrapper label { font-size: 18px; margin-bottom: 25px; color: var(--primary-color); opacity: 0.9; }
+
+        .generate-btn { background-color: var(--primary-color); color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.3s; box-shadow: 0 6px 15px rgba(166, 124, 82, 0.2); }
+        .action-btn { background: #8fa4b3; color: white; padding: 15px 30px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; height: 60px; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
+        
+        /* 編輯模式下的滑鼠手勢 */
+        [data-mode="edit"] .log-item { cursor: grab; }
+        [data-mode="edit"] .log-item:active { cursor: grabbing; }
+        /* 編輯文字時改為 I 字形游標 */
+        [data-mode="edit"] .text-content[contenteditable="true"] {
+            cursor: text;
+            user-select: text;
+        }
+
+        /* 拖拽中的透明度變化 */
+        .log-item.dragging { opacity: 0.4; border: 2px dashed var(--primary-color); }
+
+        /* 拖拽經過時的上方指示線 */
+        .log-item.drag-over { border-top: 5px solid var(--secondary-color) !important; }
+     #output{display:block;border:none;padding:20px;} .no-print { display:none !important; } .log-item { cursor: default; } .edit-btn, .mode-switcher { display: none !important; } </style></head><body data-theme="light"><div class="container">
+        <h1 id="out-title" style="text-align: center; font-size: 34px; margin-bottom: 40px; font-weight: 900; display: block;">扭曲的搖籃</h1>
+        <div id="out-img" style="text-align: center; margin-bottom: 40px;"></div>
+        <div id="out-intro-wrapper" style="margin-bottom:40px; border-left:6px solid var(--primary-color); padding-left:25px;"><p id="out-intro" style="opacity:0.9; white-space:pre-wrap; margin:0;">【歪の揺籠】<br><br>在被封閉的搖籃之中，<br>嬰孩至今仍未能發出第一聲啼哭——<br><br><br>炎熱潮濕的季節裡，流傳著令人背脊發涼的都市傳說。<br>地下鐵「大平站」流傳著某個傳聞：<br><br>「若是打開了傳出嬰孩哭聲的置物櫃，<br>　就會被帶往另一個世界。」<br><br>你造訪置物櫃的理由是什麼？只是單純想要使用？為了你的工作……？還是僅僅出於好奇？<br><br>那麼。<br>你真的要打開嗎？</p></div>
+        <div class="info-bar" id="out-info-bar" style="display: block;"><div class="info-line" style="color:#4a4a4a"><strong style="margin-right:12px; min-width:40px;">KP</strong><span>大粒毛卵</span></div><div class="info-line" style="color:#795548"><strong style="margin-right:12px; min-width:40px;">PC1</strong><span>北川 展生（莫昀）</span></div><div class="info-line" style="color:#888888"><strong style="margin-right:12px; min-width:40px;">PC2</strong><span>陸天允（熾）</span></div></div>
+        <div id="out-content"><div class="log-item" data-index="0" draggable="false"><div class="log-line" style="color:#4a4a4a; text-align:center;">
+                        
+                        <span class="text-content"><i>悶熱潮濕的季節裡，伴隨著微微寒意的都市傳說。</i><br><br><i>——地鐵「大平站」流傳著這樣的一個謠言：</i><br><i>「要是打開了那個能聽到嬰兒哭聲的置物櫃，將會被帶往另一個世界。」</i><br><br><i>因為好奇心、取材，抑或是受人之託來調查。 探索者們各自帶著不同的理由，來到了地下鐵大平站的投幣置物櫃。</i><br><br><i>那麼，真的要打開嗎？</i></span>
+                        </div></div><div class="log-item" data-index="1" draggable="false"><div class="log-line" style="color:#4a4a4a; text-align:center;">
+                        
+                        <span class="text-content">-<br><br><b>クトゥルフ神話TRPG</b><br><br><b>《歪の揺籠》</b><br><br>-</span>
+                        </div></div><div class="log-item" data-index="2" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">8月12日，中午。<br><br>或許是因為取材，又或是純粹想一睹都市傳說的樣貌，總之出自個人的緣由，你對最近的傳聞中的「大平站的置物櫃棄嬰」很感興趣。<br><br>傳聞中稱，經過大平地鐵站的投幣式置物櫃時，能聽到嬰兒的哭聲。如果打開嬰兒所在的置物櫃，就會被羨慕生者的嬰兒帶到另一個世界。<br>而且似乎還有從這種靈異事件當中生還的人存在。</span>
+                        </div></div><div class="log-item" data-index="3" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">——像這樣令人毛骨悚然的傳聞。<br><br>不過目前自己已知的情報應該也只是冰山一角吧，若是想要前往實地走訪，或許你會想辦法取得更多事前資料也說不定。</span>
+                        </div></div><div class="log-item" data-index="4" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#795548; border-left-color:#795548 !important;">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);"><b>北川 展生</b></span>
+                        
+                        <span class="text-content" style=""><br>    ——都市傳說。<br><br>無論是作為幻想或是懸疑，都是非常適合的題材。北川展生最近在思考下一本新書的內容，雖然也考慮過將那位神寫進去，但總感覺有些冒犯……陷入躊躇時，便正好滑到了社群上相當熱門的傳聞。<br><br>「置物櫃裡的棄嬰啊……」這種事佐古應該更了解，但最近兩人都很忙，訊息來往也不多。<br>他一邊嘀咕著，點開了以靈異、都市傳說一類內容為主題的論壇，打算先找看看有沒有真的去過現場的人發的貼文。 <br>  </span>
+                    </div></div><div class="log-item" data-index="5" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    這個傳聞似乎在受眾的論壇中傳得沸沸揚揚的，根據論壇中的資訊能夠得知，這個傳聞起源於大約三週前，是最近幾天才突然開始廣泛傳播的。<br>似乎是因為有人從這靈異傳說中生還，相關資訊也正在擴散。<br><br>而論壇點擊率最高的理所當然就是那位自稱生還者的人的貼文。<br><br>——6天前的8月6日，帳號名為「nayuki」的人曾被「大平站的置物櫃棄嬰」給帶走，但最後平安歸來了。  <br>  </span>
+                    </div></div><div class="log-item" data-index="6" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>【貼文】<br><br>8月6日22:22<br>我回來了？太好了！ ！ ！ ！ ！<br>到底怎麼回事啊，還以為死定了。<br><br>--------<br><br>8月6日23:00<br>現在到家了，冷靜下來之後我決定把剛才發生的事說出來。但說實話當時我幾乎是一路狂奔，所以有很多細節都記不清了。<br>我平常上下學一直都從大平地鐵站坐車。<br>今天社團活動拖得有點晚，到車站的時候已經差不多九點了。<br>接下→<br><br>--------<br><br>8月6日23:02<br>所以今天上了一下下面地鐵的廁所。<br>地下的廁所在最裡面，很遠，而且很髒，所以我平常都是用在大平站地面的廁所，今天也是沒辦法。<br>從廁所出來後，我聽見地鐵的噪音裡還有一種奇怪的聲音。<br>是嬰兒的哭聲。<br>是從廁所對面的投幣式置物櫃傳來的。<br>→<br><br>-------<br><br>8月6日23:03<br>當時我很害怕，為什麼置物櫃裡會有嬰兒的哭聲？但是如果真的有小孩在裡面也不能放不管。<br>現在想起來，要是我沒管就好了。<br>只有一個櫃子上了鎖，嬰兒的哭聲就是從那裡面傳出來的。<br>→<br><br>--------<br><br>8月6日23:09<br>正當我不知道該怎麼辦的時候，發現置物櫃頂上有一把鑰匙，於是我鼓起勇氣打開了櫃門。<br>之後的事我就記不清了。<br>唯一記得的是，我回過神來的時候發現自己依舊站在大平地鐵站的置物櫃前，但身後的廁所不見了，取而代之的是數不清的置物櫃。<br>很明顯不是正常的大平地鐵站。<br>→<br><br>-------<br><br>8月6日23:15<br>我不知道什麼時候我的口袋多了一把鑰匙，但是打不開嬰兒的那扇門。<br>就在我到處找回來的方法時，長得像嬰兒一樣的噁心怪物開始在邊上爬來爬去，於是我逃走躲了起來。<br>之後我打開了404號寄存櫃的門就回來了。<br>雖然那把鑰匙上沒有標籤，但也許就是404號的鑰匙。<br><br>--------<br><br>8月6日 23:30<br>可能是我運氣比較好一次就猜中了。<br>但我絕對不會再靠近那邊了，太可怕了。<br><br></span>
+                    </div></div><div class="log-item" data-index="7" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style="">回覆欄裡雞飛狗跳，而現在他的帳號上了鎖。<br></span>
+                    </div></div><div class="log-item" data-index="8" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#795548; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    六天前啊。北川展生曲起手指蹭了蹭下巴，摸不准這是真實經歷，還是為了引人注意而撰寫的創作文。<br>就算想細問，對方的帳號也已經鎖了，再者如果真是後者，大概也不會乖乖承認吧。<br><br>將裡面一些重點記下，北川展生關掉了這則貼文，轉而點開搜尋引擎。<br><br>都市傳說、大平站、投幣式置物櫃、棄嬰……他思索著，又接著敲了「怪物」和「鑰匙」上去，用這幾個關鍵字輪流搜看看。 <br>  </span>
+                    </div></div><div class="log-item" data-index="9" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    分別輸入幾個關鍵詞，按下搜索，網頁裡跳出了幾則令你在意的資訊和推文。 <br>  </span>
+                    </div></div><div class="log-item" data-index="10" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>【新聞的段落】<br>1973 年前後，接連有人在投幣式置物櫃中發現嬰幼兒屍體。<br>尤其是在1973 年，以大城市的列車終點站為主要地點，發現了46起遺棄事件，這一度成為了社會問題。<br></span>
+                    </div></div><div class="log-item" data-index="11" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>【大平站的置物櫃棄嬰傳聞】<br>這是最近廣為流傳的都市傳說。<br>有人說，經過大平地鐵站的投幣式置物櫃時，能聽到嬰兒的哭聲。<br>有人說，一旦打開嬰兒所在的置物櫃，就會被帶到另一個世界，而且再也無法回來了。<br><br>至於起源的時間和熱門程度和剛剛確認到的別無二致。<br></span>
+                    </div></div><div class="log-item" data-index="12" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    【知識】或【圖書館】+【神秘學】+【圖書館】+【知識】 <br>  </span>
+                    </div></div><div class="log-item" data-index="13" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#795548; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>cc&lt;=65 圖書館使用 (1D100&lt;=65) 獎勵・懲罰骰[0] ＞ 64 ＞ 64 ＞ 一般成功<br><b>cc&lt;=30 神秘學 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 100 ＞ 100 ＞ 大失敗</b><br>cc&lt;=65 圖書館使用 (1D100&lt;=65) 獎勵・懲罰骰[0] ＞ 17 ＞ 17 ＞ 困難成功<br><b>cc&lt;=75 教育EDU (1D100&lt;=75) 獎勵・懲罰骰[0] ＞ 2 ＞ 2 ＞ 極限成功</b><br></span>
+                    </div></div><div class="log-item" data-index="15" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    你從過往的印象中能得知自己的確聽過近年來依舊有個別將嬰兒放入置物櫃中的社會案件，但你並不記得大平站也曾經有過。 <br><br>不過繼續瀏覽著搜尋資料，能發現有像是「嬰兒的啼哭聲似乎在晚上才能聽見」、「很多人一起去的情況什麼也沒聽見過」的、像這樣的流言存在。 <br>  </span>
+                    </div></div><div class="log-item" data-index="16" draggable="false">
+                    <div class="block-styled" data-tag-name="北川 展生" style="background-color:#f9f9f9; color:#795548; border-left-color:#795548 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(121, 85, 72);">北川 展生</span>
+                        
+                        <span class="text-content" style=""><br>    「……真奇怪，大平站的傳聞是怎麼開始的？」<br>以前確實聽過「置物櫃的嬰兒」這樣的都市傳說，即使流言傳開後會產生差異，也不至於差成這樣。<br><br>網路上的貼文要找到源頭無異於大海撈針，能找到的東西也有限。北川展生思索片刻，決定等到晚上過去探探情況。 <br>  </span>
+                    </div></div><div class="log-item" data-index="17" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#888888; border-left-color:#888888 !important;">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);"><b>陸天允</b></span>
+                        
+                        <span class="text-content" style=""><br>    恰好在下課時間摸魚滑論壇就這麼翻出了都市傳說傳聞的陸天允摸摸下巴，在搜尋欄裡輸入了由「大平地鐵站」、「投幣式置物櫃」、「棄嬰」、「另一個世界」、「都市傳說」、「親身經歷」這麼幾個詞排列組合而成的關鍵字，查找看看還有沒有其他線索或古人講史。 <br>  </span>
+                    </div></div><div class="log-item" data-index="18" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    按下搜索，幾個關鍵字排列組合下跳出了幾則令你在意的資訊和推文。 <br>  </span>
+                    </div></div><div class="log-item" data-index="19" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>【新聞的段落】<br>1973 年前後，接連有人在投幣式置物櫃中發現嬰幼兒屍體。<br>尤其是在1973 年，以大城市的列車終點站為主要地點，發現了46起遺棄事件，這一度成為了社會問題。<br></span>
+                    </div></div><div class="log-item" data-index="20" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>【大平站的置物櫃棄嬰傳聞】<br>這是最近廣為流傳的都市傳說。<br>有人說，經過大平地鐵站的投幣式置物櫃時，能聽到嬰兒的哭聲。<br>有人說，一旦打開嬰兒所在的置物櫃，就會被帶到另一個世界，而且再也無法回來了。<br><br>這個傳聞起源於大約三週前，最近幾天突然開始廣泛傳播。<br>似乎是因為有人從這靈異傳說中生還，相關資訊也正在擴散。<br></span>
+                    </div></div><div class="log-item" data-index="21" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    【知識】或【圖書館】+【神秘學】+【圖書館】+【知識】 <br>  </span>
+                    </div></div><div class="log-item" data-index="22" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#888888; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>cc&lt;=85 教育EDU (1D100&lt;=85) 獎勵・懲罰骰[0] ＞ 80 ＞ 80 ＞ 一般成功<br>cc&lt;=55 神秘學 (1D100&lt;=55) 獎勵・懲罰骰[0] ＞ 53 ＞ 53 ＞ 一般成功<br>cc&lt;=40 圖書館使用 (1D100&lt;=40) 獎勵・懲罰骰[0] ＞ 28 ＞ 28 ＞ 一般成功<br>cc&lt;=85 教育EDU (1D100&lt;=85) 獎勵・懲罰骰[0] ＞ 20 ＞ 20 ＞ 困難成功<br></span>
+                    </div></div><div class="log-item" data-index="23" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    你從過往的印象中能得知自己的確聽過近年來依舊有個別將嬰兒放入置物櫃中的社會案件，但你並不記得大平站也曾經有過。<br><br>不過繼續瀏覽著搜尋資料，能發現有像是「最近大平站附近有很多人失蹤都是因為被置物櫃的嬰兒給帶走了」、「嬰兒的啼哭聲似乎在晚上才能聽見」、「很多人一起去的情況什麼也沒聽見過」的、像這樣的流言存在。 <br>  </span>
+                    </div></div><div class="log-item" data-index="24" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#888888; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>嗯～不過感覺那些嬰兒只是想找人帶他們回家或想被超渡吧？<br>還是要找個道士過去看看嗎……或是靈媒之類的？<br><br>沉吟幾聲、向後仰倒進椅背，陸天允將論壇發文截圖後附上網址一起扔給了教授和朋友們，隨訊問了問嬰靈的超渡方法，或是有沒有人去過之類的。<br><br><i>『我預計今晚會去看看喔！』</i><br><i>『有沒有人要+1啊ξ( ✿＞◡❛)』</i><br></span>
+                    </div></div><div class="log-item" data-index="25" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#4a4a4a; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    你的問題和邀約一併地拋在幾人的聊天室裡，但過了好一陣子也不見有誰已讀的跡象，甚至那些人的上線模式突然都變為離線了。<br><br>……或許是都在忙吧？ <br>  </span>
+                    </div></div><div class="log-item" data-index="26" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#888888; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    cc&lt;=10 心理學 (1D100&lt;=10) 獎勵・懲罰骰[0] ＞ 78 ＞ 78 ＞ 失敗<br>  </span>
+                    </div></div><div class="log-item" data-index="27" draggable="false">
+                    <div class="block-styled" data-tag-name="陸天允" style="background-color:#f9f9f9; color:#888888; border-left-color:#888888 !important;" data-merged="true">
+                        <span class="info-tag" style="color: rgb(136, 136, 136);">陸天允</span>
+                        
+                        <span class="text-content" style=""><br>    非常遺憾地關掉了通訊畫面，陸天允決定就算沒人+1也要去探個究竟——說不定有誰晚點看到訊息就突然想去了呢？總不能放人鴿子嘛。<br><br>待到放學時間，眼見時間距離入夜也不消多時，陸天允再確認了眼聊天室頁面、隨手回覆幾則公事訊息和報備後，就著手準備起去地鐵站夜遊的配備，帶著愉快的心情出發了。 <br>  </span>
+                    </div></div><div class="log-item" data-index="28" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">——大平站。<br>一個集中了多條路線的大型車站，一共分為地上層和地下層。<br><br>地上層最近剛重建，整體看上去是簡潔的現代風格。<br>站內客流量較大，也設有購物中心，以時尚美食相關店家為主，也有可以購買日用品的藥妝店。<br>車站內設置了數量眾多的小型～大型置物櫃，均為僅能使用IC卡付款的最新型。<br><br>而地下層的地鐵並非是通往市中心的路線，所以比起地面上客流量有所減少，但也絕不算少。<br>由於下方的地鐵站很久沒有進行改造工程，建築存在部分老化。<br>廁所和置物櫃很難稱得上乾淨，所以大多數人都會選擇整潔的地上層設施，地下幾乎沒有人使用。</span>
+                        </div></div><div class="log-item" data-index="29" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">從上方的入口處下到地下層的地鐵站內，陸天允你來到了大平站的入口處，雖然還在平日的下班及放學時間，但也意外地有些人流。<br><br>離檢票口稍遠的通道盡頭是廁所，廁所對面設置了20個小型置物櫃和6個大型置物櫃。<br>地上層的置物櫃是新型的IC卡式置物櫃，但這裡卻依舊是老式的投幣式鑰匙置物櫃。</span>
+                        </div></div><div class="log-item" data-index="30" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">這個人流……看起來要再晚點才會出事吧。<br>來得太早了，唉。<br><br>隨興地看了看地鐵站內部裝潢，陸天允與人潮擦身而過，邊悠哉地在地下層內繞圈，邊朝廁所的方向移動，打算看看現在的儲物櫃裡有沒有東西。<br><br>姑且是在想盡辦法殺時間。</span>
+                        </div></div><div class="log-item" data-index="31" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">或許是因為自地上層重建後大家都會選用更新的設備，這裡的置物櫃看上去都是無人使用的狀態，沒有任何一個櫃子被上了鎖，裡面也理所當然地沒有放置任何東西。</span>
+                        </div></div><div class="log-item" data-index="32" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">關上不論哪格都空無一物的櫃門，陸天允張望了會便晃進了便利商店，隨手拿了幾個麵包和飲料，結完帳便泰然自若地賴在櫃台邊（不會擋到路的地方），對著方才幫忙結帳的店員笑了笑。<br><br>「大哥晚安啊！今天會很忙嗎？」一罐無糖綠茶討好似地推了過去，「你們這裡通常都開到幾點？應該不會到太晚吧？」</span>
+                        </div></div><div class="log-item" data-index="33" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">「喔……謝謝。」<br>放下手中掃描條碼的儀器，他抬眼看了看來人，才有注意到那罐你推來的飲料。隨即笑笑地收下了。<br><br>「還算可以吧，上下班時段人潮就是這樣，不過有被上面的店分走不少人流了。」<br>「這裡的便利店開到晚上九點，應該還算是正常營業時間吧，不過那邊的失物招領處更早一點，晚上七點就關了。」</span>
+                        </div></div><div class="log-item" data-index="34" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「誒～這樣喔。」順道摸出手機看了眼現在的時間，陸天允撓撓頭髮，放低音量：「但最近這裡不太平吧？是不是置物櫃有怪聲，或是人口拐賣事件什麼的……」<br><br>「大哥你在這裡工作的時候，有聽說過什麼嗎？」</span>
+                        </div></div><div class="log-item" data-index="35" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">「不太平喔……的確聽說過好像有不少人在這附近失蹤的，搞得大家人心惶惶的，害我下班都有點提心吊膽，也有警察來的樣子。」<br>說著，他開啟那瓶飲料灌下一口才接續著說下去。<br><br>「雖然我沒聽過你說的怪聲，但最近年輕人都在討論，我也多少知道一點，說是晚上夜深人靜的時候那邊的置物櫃會傳出嬰兒的哭聲。」</span>
+                        </div></div><div class="log-item" data-index="36" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「不知道嬰兒的哭聲跟笑聲哪個比較恐怖哦……」才不知道為什麼要有這種比較。「嘛，總之沒聽到就是最好的。」<br>「那我先走啦。大哥回家的時候也要小心安全喔！掰掰。」<br>再塞了包軟糖過去結束對話，陸天允笑瞇瞇地朝人揮了揮手便離開超商，轉而去往對面的失物招領處看個幾眼。</span>
+                        </div></div><div class="log-item" data-index="37" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">親切的大哥同樣用笑容目送你離開的背影，而後你來到了失物招領處。<br>看上去有些清閒的櫃檯人員望見你的視線後率先開了口。</span>
+                        </div></div><div class="log-item" data-index="38" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">「您好，請問是要尋找失物嗎？」</span>
+                        </div></div><div class="log-item" data-index="39" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯～我不確定是不是在這邊掉的，不過，你們這裡有放了一段時間的皮包或皮夾嗎？」</span>
+                        </div></div><div class="log-item" data-index="40" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">Secret dice 🎲</span>
+                        </div></div><div class="log-item" data-index="41" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">能見站內人員垂著頭似乎是在確認失物，隨後才重新抬起頭來。<br><br>「確實有幾件，請問您還記得內容物或是能提供相關證件確認身份嗎？」</span>
+                        </div></div><div class="log-item" data-index="42" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「啊～……可能，有幾張舊鈔？」<br>「還有幾張漂亮的女孩子的相片，或是家庭合照之類的……」<br><br>「但裡面大概沒有跟我現在長得像的樣子。」抓起瀏海露出臉上幾乎毀壞了半張臉的傷疤，陸天允聳聳肩。</span>
+                        </div></div><div class="log-item" data-index="43" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">站內人員望見後愣了愣，急忙頜首示意後邊再度低下頭去為你確認失物。<br>然而畢竟你也不是真的有在這裡掉過錢包，他看上去有些惋惜地抬起了頭。<br><br>「非常抱歉，這裡沒有像是裝有那樣的內容物的皮包或皮夾，若是印象中有在附近掉過，也有可能是送到地上層的失物招領處了也說不定。」</span>
+                        </div></div><div class="log-item" data-index="44" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「……這樣啊。」<br>「知道了，那我待會上去問問看好了！謝啦～」<br><br>揮別看起來好像真的有點抱歉的站務人員，絲毫沒有愧疚感的陸天允抓著背包離開失物招領處，慢悠悠地找了處隱蔽的地方待著滑手機，等看今晚有沒有緣聽見嬰兒的哭聲。</span>
+                        </div></div><div class="log-item" data-index="45" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"><br>―――<br></span>
+                        </div></div><div class="log-item" data-index="46" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">牆面上鐘裡的指針落在整點的位置。<br>時間臨近深夜，失物招領處和便利店已經關閉了，而站務人員室的窗上貼著一張暫時離開的紙條，晨間原先還稀稀落落的人潮此時除了陸天允以外沒有其他人影，就連天花板上的黃光都帶有一絲詭譎。<br><br>就在此時，樓梯間再度響起了腳步聲。<br><br>——你們兩人對上了目光。</span>
+                        </div></div><div class="log-item" data-index="47" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">從蜷踞的位置裡站起身，伸完懶腰陸天允才揚起笑意和掌心招呼人：「嗨，同學。你也是來看都市傳說的？一個人？」</span>
+                        </div></div><div class="log-item" data-index="48" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「也……這麼說來，你是為了都市傳說來的？」<br>沒對稱呼多作反應，北川展生上下打量了一下對方——年輕、活力、態度有點輕佻，大學生嗎？<br><br>他回想了下過來前查到的資料。<br>「很多人一起去的情況什麼也沒聽見過」……兩個人的話稱不上多，結伴也能以防萬一吧。<br><br>「我也是來看看的，要一起嗎？」</span>
+                        </div></div><div class="log-item" data-index="49" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「好啊！有個伴也好照應。」<br><br>非常爽快地答應了陌生男子在深夜地鐵站的同行邀約，陸天允邊隨口搭話，邊拽著背包走近失物招領處，打算看看先前沒見全的失物現在能翻了沒。<br><br>「我叫陸天允，在附近大學讀民俗學系。為了寫研究專題才過來的。」<br>「同學你對這個都市傳說有什麼瞭解嗎？」</span>
+                        </div></div><div class="log-item" data-index="50" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……民俗學啊。<br>有些熟悉的科系讓北川展生多看了陸天允幾眼。他靠在一邊，看對方在幹些什麼。<br><br>「陸天允，你好。」北川展生點了點頭，「我叫北川展生，是寫小說維生的，來看這個能不能當題材。」<br>「瞭解多少的話……如果你來之前也是上網查的，我們應該差不多？」</span>
+                        </div></div><div class="log-item" data-index="51" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【聆聽】</span>
+                        </div></div><div class="log-item" data-index="52" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=56 聆聽 (1D100&lt;=56) 獎勵・懲罰骰[0] ＞ 13 ＞ 13 ＞ 困難成功</span>
+                        </div></div><div class="log-item" data-index="53" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=50 聆聽 (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 58 ＞ 58 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="54" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">北川展生丟出疑問的同時，忽然間你們隱隱約約聽到有什麼聲音從通道盡頭的置物櫃的方向傳來——那是嬰兒的哭聲。</span>
+                        </div></div><div class="log-item" data-index="55" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……嬰兒的哭聲？」<br>想起都市傳說的內容，北川展生感覺後頸處的皮膚隱隱起了些雞皮疙瘩。他抬手揉了揉，轉頭往聲音的來源看去。</span>
+                        </div></div><div class="log-item" data-index="56" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">哦，看來兩個人也可以啊。<br><br>眼見失物招領處的窗口是鎖著的，也沒有可趁之機，陸天允旋即放棄了對此的執念、轉而往傳出哭聲的置物櫃踏出腳步。<br><br>「寫小說居然也需要實地考察嗎？好敬業喔。」<br>「要是真的遇到超邪門的靈異事件怎麼辦？」</span>
+                        </div></div><div class="log-item" data-index="57" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「實際看過寫起來比較真實。」北川展生聳聳肩，也抬腳跟了上去。<br><br>「真的遇到……」他頓了頓，表情顯得有些微妙，「也不能怎麼辦，只能想辦法解決。我的稿還沒寫完，如果窗了會被編輯追殺到地獄吧。」</span>
+                        </div></div><div class="log-item" data-index="58" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">拐進通道，路過拐角，映入眼簾的投幣式鑰匙置物櫃被設置在廁所對面。<br><br>置物櫃編號為101號到126號，其中101號到120號為小型置物櫃，121號到126號為大型置物櫃。<br>而目前似乎只有【111號】正在被使用當中。<br><br>【聆聽】</span>
+                        </div></div><div class="log-item" data-index="59" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=50 聆聽 (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 90 ＞ 90 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="60" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=56 聆聽 (1D100&lt;=56) 獎勵・懲罰骰[0] ＞ 95 ＞ 95 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="61" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">就在這時、<br><br><br><b>　　　　　叮。</b><br><br><br>隨著一聲清脆的金屬聲傳出，你們的心臟猛地一跳。</span>
+                        </div></div><div class="log-item" data-index="62" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">視線不經意張望著尋找聲音來源，然後你們立馬意識到了哪裡不對勁。<br><br>一把貼有【111號】標籤的鑰匙，正躺在剛剛還什麼也沒有的置物櫃頂。<br>從落下般的聲音來判斷，會是從天花板上掉下來的嗎？<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="63" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=51 SAN (1D100&lt;=51) 獎勵・懲罰骰[0] ＞ 92 ＞ 92 ＞ 失敗<br>SAN :51 → 50</span>
+                        </div></div><div class="log-item" data-index="64" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="65" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=52 SAN (1D100&lt;=52) 獎勵・懲罰骰[0] ＞ 6 ＞ 6 ＞ 極限成功</span>
+                        </div></div><div class="log-item" data-index="66" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……那則貼文，該不會全是真的吧？<br>伸手將那把鑰匙拿下來翻看，北川展生忍不住皺了下眉。<br><br>「陸天允，你有看到論壇上的貼文嗎？」他邊說邊將鑰匙遞過去，讓對方也能看看。<br>「發文的人似乎去過櫃子的『另一邊』，經歷就和我們現在一樣：循著嬰兒的哭聲過來，發現只有一個櫃子上鎖，之後在櫃子頂部看到鑰匙。」</span>
+                        </div></div><div class="log-item" data-index="67" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">突然被JS型音效嚇了一跳，陸天允安下心才接過鑰匙端詳一陣，倒是對著北川展生的問題搖搖頭。<br><br>「我沒看過你說的那則貼文。」<br>「我查到的只有，『如果打開嬰兒所在的置物櫃，就會被帶到另一個世界』而已。」<br><br>「……不過，照你說的，我們現在應該就是要打開那個上鎖的櫃子嗎？111？」說著就準備把鑰匙插進置物櫃鎖孔。</span>
+                        </div></div><div class="log-item" data-index="68" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「啊……那是發在靈異論壇上的，沒特別上去應該看不到。」<br>「他說打開櫃子後不記得發生什麼了，回過神來還站在大平站裡，但面前有一堆置物櫃，口袋多了……喂等等、你幹什麼！」<br><br>回憶到一半忽然發覺身邊人的動作，北川展生嚇了一跳，連忙伸手想阻止陸天允。</span>
+                        </div></div><div class="log-item" data-index="69" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【兩人．DEX對抗】</span>
+                        </div></div><div class="log-item" data-index="70" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=75 敏捷DEX (1D100&lt;=75) 獎勵・懲罰骰[0] ＞ 85 ＞ 85 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="71" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=58 敏捷DEX (1D100&lt;=58) 獎勵・懲罰骰[0] ＞ 31 ＞ 31 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="72" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允．你手中的鑰匙還未能放入【111號】的鎖孔便被北川展生搶先一步抓住了手臂。</span>
+                        </div></div><div class="log-item" data-index="73" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「啊……？」本來也沒多快就被人著急地拽停，陸天允困惑地看了眼北川展生，「開門啊。還是你想先在這裡上廁所再過去？」</span>
+                        </div></div><div class="log-item" data-index="74" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">攔下來後便收回了手，北川展生隱隱有些頭痛地按了按眉間。<br>「我話還沒說完。那個人在另一邊還遇到了長得像嬰兒的怪物，你沒考慮過如果真的過去了，找不到回來的路怎麼辦？」</span>
+                        </div></div><div class="log-item" data-index="75" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「唔嗯～但是不少人都去過然後回來了吧？」陸天允樂觀地攤開手，「再不濟，你不也說過你的編輯會追你到地獄嗎？那就讓我搭個順風車回人間吧！」</span>
+                        </div></div><div class="log-item" data-index="76" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">被說得有點動搖，北川展生認真地思索起來。<br><br>他是為了取材才過來的，如果就這麼回去等於白跑一趟；如果真如貼文所說，過去後會出現一把鑰匙、打開404號櫃子就能回來……即使真遇上怪物了，只要趕緊去開櫃子就可以了吧？<br><br>「好吧，你說得對。」他點點頭，「雖然確實聽到了嬰兒的哭聲，但也沒什麼特別的東西能寫……不如開看看到底會出現什麼。」</span>
+                        </div></div><div class="log-item" data-index="77" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">……真好說服欸。這人該不會是那種被稍微傳教就會入教的腦波薄弱的大盤子吧？<br><br>眨了眨眼，陸天允點點頭，附帶一句「那我打開囉」便重新將鑰匙插進111號置物櫃的鎖孔、扭轉、開門。</span>
+                        </div></div><div class="log-item" data-index="78" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……這傢伙一定在想什麼超失禮的事情。</span>
+                        </div></div><div class="log-item" data-index="79" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允將鑰匙插入的那一瞬間，一陣強烈的眩暈感向著兩人襲來。<br>視線前方的畫面糊作一片，得勉強支撐著身子才不至於跌坐地面。<br><br>而似乎只過了片刻，你們的視野便漸漸穩定下來，眼前的是和剛才一樣的置物櫃。</span>
+                        </div></div><div class="log-item" data-index="80" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">......但本來要打開的【111號】櫃門卻緊閉著。<br><br>你們環顧四周，餘光瞄準到後方的景色時不自覺地打了個寒顫——原本應該要在的廁所消失了。<br>取而代之的是佈滿一整條通道的投幣式置物櫃。<br>這裡顯然不是剛才的大平站。<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="81" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=52 SAN (1D100&lt;=52) 獎勵・懲罰骰[0] ＞ 82 ＞ 82 ＞ 失敗<br>SAN :52 → 51</span>
+                        </div></div><div class="log-item" data-index="82" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="83" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=50 SAN (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 72 ＞ 72 ＞ 失敗<br>SAN :50 → 49</span>
+                        </div></div><div class="log-item" data-index="84" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="85" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「唔……你有錄影嗎？或是錄音？」<br>晃晃腦袋調整好失衡的重心，陸天允眨眨眼睛，邁步走向身後突然多出的一整排置物櫃。</span>
+                        </div></div><div class="log-item" data-index="86" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「嘶……」<br>暈眩間掌心按上了面前的置物櫃，自皮膚傳來的冰涼觸感勉強拉回一些意識，北川展生閉了閉眼，感覺好一些後才長呼出一口氣。<br><br>「沒有。」投往周圍的視線觸及的全是投幣式置物櫃，即使早有預料，在跨步時北川展生仍是忍不住皺緊了眉。<br>「但就算錄了應該也看不清楚吧？」畢竟是都市傳說。</span>
+                        </div></div><div class="log-item" data-index="87" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">想收回剛才「敬業」的評價了。<br>陸天允含糊地應了幾聲，倒是從背包裡挖出了小型鏡頭，夾在領口充當錄影機。</span>
+                        </div></div><div class="log-item" data-index="88" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">摸索背包的同時，陸天允你意識到身上哪裡多出了原先不存在的重量。<br>你循著那股異樣感往口袋裡一翻，裡面放著一把【沒有標籤的鑰匙】。<br><br>而見著這般景象的北川展生或許也能跟著意識到那股異樣感，你身上也同樣放著一把【沒有標籤的鑰匙】。</span>
+                        </div></div><div class="log-item" data-index="89" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">沒想到大學生身上會隨身攜帶鏡頭，北川展生有些稀奇地多看了一眼，隨後又因為陸天允的動作，也伸手摸了下口袋，果然摸到了本來不存在的鑰匙。<br><br>「……剛才好像說到一半。進來後口袋會多一把鑰匙，但沒辦法打開讓我們過來的那扇門、就是111號。」他捏著鑰匙朝陸天允揮了揮，接續道：「原貼文是打開404號櫃子才逃離這裡的，但他只有一個人，我不知道兩個人會不會產生變化。」</span>
+                        </div></div><div class="log-item" data-index="90" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嘿——404啊。」404 Not Found.<br>想起了會出現這個狀態碼的場景，陸天允不禁設想了番滿地亂爬的巨嬰找不到404號門的畫面，忍不住揚起嘴角。<br>「要是關上再打開一次行不通的話，我再找找其他辦法吧。」<br><br>將毫無標記的鑰匙捏在指尖把玩一陣才收回口袋，他將目光投向多出的那排置物櫃。</span>
+                        </div></div><div class="log-item" data-index="91" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「說起來，如果打開對的門就能離開，開錯會怎麼樣？」<br>打量著剛才還不存在的置物櫃，北川展生摸了摸下巴。<br><br>「……像嬰兒的怪物，該不會就是從這些櫃子裡爬出來的吧。」</span>
+                        </div></div><div class="log-item" data-index="92" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">一整排小型置物櫃在本應是廁所的地方排成一排。放眼望去，有些地方還黏著飛濺的紅黑色污漬，就像是乾涸的血液。</span>
+                        </div></div><div class="log-item" data-index="93" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【上鎖的置物櫃號碼】<br>401～402、411～412、420～426、430～435、438～444、448～449、452、456～457、463、472～477、479、482～484、492～493、498</span>
+                        </div></div><div class="log-item" data-index="94" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「開錯了大概會被jump scare吧。」恐怖片都愛玩這套。<br>「話說，展生你剛是說論壇發文的人打開404號櫃就回去了？」陸天允伸手輕點了點那格櫃門，回頭望向北川展生，「這次看起來沒有鎖耶。你要打開看看嗎？」</span>
+                        </div></div><div class="log-item" data-index="95" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……不，晚點再說吧。」對比自己小的人直呼名字沒什麼反應，北川展生只是擺了擺手。「還不確定論壇的內容是不是完全一樣，如果開出怪物就糟糕了。而且都過來了，總不能什麼都沒發現就走。」<br>「我比較在意上鎖的置物櫃……假設這些號碼有規律，很有可能會和怪物或離開的號碼有關。」</span>
+                        </div></div><div class="log-item" data-index="96" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「O～K。總之現在就是找線索時間。」<br>懶洋洋地伸展了下背脊，陸天允離開儲物櫃前，轉而晃到失物招領處又看了幾眼。</span>
+                        </div></div><div class="log-item" data-index="97" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">在手機備忘錄將上鎖的置物櫃號碼記錄下來，北川展生看了眼朝失物招領處走去的陸天允，想了想，抬腳走往便利商店。</span>
+                        </div></div><div class="log-item" data-index="98" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">正當兩人走出擺放著大量置物櫃的區域時，映入眼簾的是有誰倒在你們的正前方。<br><br>而大廳裡莫名的潮濕且悶熱無比，還瀰漫著令人作嘔的腐臭。<br>不僅如此，地板上甚至佈滿了紅黑色的小手印。</span>
+                        </div></div><div class="log-item" data-index="99" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">腳步在見到另一道橫倒的身影時便緩了下來，北川展生抬手摀住鼻子，然而竄進鼻腔的氣味絲毫不減。<br><br>人是死是活？如果活著且有意識，應該能聽到他們剛才的對話，並做出反應……<br>看了看地上那些有新有舊的手印，他在心裡嘆了口氣，小心翼翼地靠近對方。</span>
+                        </div></div><div class="log-item" data-index="100" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">……現在才聞到臭味？<br><br>突然不是很確定倒在前方的人體是突然出現還是已經在這裡很久了，陸天允此刻納悶的，更多是關於大平地鐵站的通風構造究竟是怎麼運作的。<br><br>前進的腳步只微微一頓又接續跨出。<br>他沿著側牆避開手印、靠近人影，投去目光。</span>
+                        </div></div><div class="log-item" data-index="101" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">走近一看，眼前是一具早已斷氣了的屍體——你們確信惡臭就是由這裡傳出的。<br><br>屍體死的時間看上去沒有久至腐爛到能見白骨的程度，不過身上和周圍的地面一樣遍佈了小手印。<br>而他的兩手中緊緊握著一部手機和小小的記事本。<br><br>＜SANC 1/1D3＞</span>
+                        </div></div><div class="log-item" data-index="102" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=51 SAN (1D100&lt;=51) 獎勵・懲罰骰[0] ＞ 53 ＞ 53 ＞ 失敗<br>1D3 (1D3) ＞ 3<br>SAN :51 → 48</span>
+                        </div></div><div class="log-item" data-index="103" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=49 SAN (1D100&lt;=49) 獎勵・懲罰骰[0] ＞ 57 ＞ 57 ＞ 失敗<br>1D3 (1D3) ＞ 3<br>SAN :49 → 46</span>
+                        </div></div><div class="log-item" data-index="104" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="105" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="106" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……已經死了啊。」<br>說不清是遺憾還是鬆了口氣，畢竟他不覺得兩人能在這種環境下再分出心力照顧一名傷患，但見到人死在眼前也不好受。<br><br>北川展生沒有停下，直接走到屍體邊蹲低身子，低聲說了句抱歉，從對方手裡抽出記事本。</span>
+                        </div></div><div class="log-item" data-index="107" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【上岡的筆記】<br><br>記事本從裡到外都沾滿乾涸的血跡，你從前半部和現狀無關的紀錄來看能得知屍體名為上岡。<br>而記事本最新的一頁用有些顫抖著的筆跡寫下了：「愛、彩、對不起，希望你們幸福。」<br><br>另一側還寫上了：「401～40■、411～412、420～426、430～435、438～444、448、452～453、456～457、463、472～476、479、482～484、492～493、498」<br><br>其中，453被圈了起来。<br>■的部分則是被血污覆蓋無法辨認出正確的數字。</span>
+                        </div></div><div class="log-item" data-index="108" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯……看來被嬰兒抓到就會變這樣吧。」至少確定滿地亂爬的巨嬰是不能接觸的了。<br>瞄了眼北川展生翻開的本子，發覺似乎是置物櫃的數字，陸天允轉而從屍體中挖出手機翻看，決定把數學題交給看起來比較聰明的展生同學解決。</span>
+                        </div></div><div class="log-item" data-index="110" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">當你拿起手機之際，螢幕立馬亮了起來。<br>鎖定螢幕上出現了一張三人的全家福照片，另外兩人應該是他的妻子和年幼的女兒吧。<br><br>不過手機看上去是用密碼鎖定的，無法開啟查看裡面的內容。</span>
+                        </div></div><div class="log-item" data-index="111" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「喔，還有電耶。」<br>嗯～感覺這種鎖定螢幕會放家人合照的大叔，手機密碼應該是結婚紀念日或女兒出生的日期吧？<br><br>「需要密碼才解得開。」<br>將手機的鎖定畫面遞給北川展生看，陸天允邊好奇地探了探對方手裡的筆記本。<br>「如何？有研究出什麼來嗎？」</span>
+                        </div></div><div class="log-item" data-index="112" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">如果這也是上鎖的置物櫃，號碼和他們剛才看到的有點不一樣……先不看認不出來的數字，其他號碼少了449、477，而多出來的453則被圈了起來，為什麼？<br>這會是對方解出來的「答案」嗎？……如果是的話也太冤枉了，在打開櫃門前就死了。<br><br>「暫時沒什麼想法，只看得出號碼大多和剛才上鎖的櫃子一樣。」<br>瞥了眼手機亮起的畫面，北川展生先是翻了翻筆記本，隨後才又翻回寫著數字的那頁，將攤開的頁面偏向身邊的人，邊說邊點著數字：「這裡被血擋住了看不清楚，可能是2到9其中一個吧；號碼少449和477，多了這個被圈起來的453。」<br><br>「除了這頁以外，筆記本裡沒再寫什麼了，大概找不到手機密碼的線索。」他有些遺憾地說。</span>
+                        </div></div><div class="log-item" data-index="114" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「哦……我們少了453啊。」該不會他把鑰匙跟號碼給妻女了？<br>「如果再來一個樣本就能確定規律了。先看看這裡還有沒有其他東西吧。」<br><br>姑且記下了449和477這兩個號碼，陸天允直起身，繼續往失物招領處靠近。</span>
+                        </div></div><div class="log-item" data-index="115" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「嗯。」北川展生點點頭，用手機將這頁號碼拍了下來。<br><br>將筆記本放回屍體手裡，他剛準備起身往便利商店走，突然想起了什麼，又摸了摸對方衣服的口袋、或其他能放東西的地方。<br>屍體是帶不走了，但如果能翻到證件也能代為還給家人吧。……找得到的話。找不到就只能將筆記本帶走了。</span>
+                        </div></div><div class="log-item" data-index="116" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">屍體就倒在失物招領處的一旁，陸天允你稍微湊近了一些，能見窗口此時被上了鎖，看去裡頭也是一片的漆黑。<br></span>
+                        </div></div><div class="log-item" data-index="117" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">而北川展生你從屍體的口袋中翻出了皮包，裡頭裝有一張能夠辨識身分的證件。<br>看來這名男子叫做「上岡正仁」。<br><br>【偵查】</span>
+                        </div></div><div class="log-item" data-index="118" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=70 偵查 (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 66 ＞ 66 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="119" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">定睛一看，你發現屍體各處佈滿了小小的傷口，最為嚴重的地方是在脖頸處的位置。<br>而那些傷口的形狀看上去就像是被人類牙齒給咬出來的，只是不知為何，你覺得牙印有些小。</span>
+                        </div></div><div class="log-item" data-index="120" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">怎麼哪裡的失物招領處都上鎖了啊？<br>無奈地扁扁嘴，陸天允欣然放棄了破窗入室搶劫的想法，轉而晃去旁邊的售票機瞧瞧。</span>
+                        </div></div><div class="log-item" data-index="121" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……」該不會、不，怎麼想都是所謂的「嬰兒」咬的吧。<br>對著傷口微微抽了下眼角，北川展生收好翻到的證件，站起身走向便利商店。</span>
+                        </div></div><div class="log-item" data-index="122" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允你眼前的大平站售票機和你在原先的大平站那時看來沒有太多的差異，唯一的不同是，上方標示的路線圖看上去有些詭異。<br><br>——只有一條路線，而這裡是終點站（或起始站）。</span>
+                        </div></div><div class="log-item" data-index="123" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">北川展生你來到了檢票口旁的小型便利店前方，沒有通電的自動販賣機裡擺著各式各樣的飲料。<br>雖然一旁也有平時能見到的那種簡便食物，不過三明治和飯糰之類的食物已經完全變質了，看上去無法食用。<br><br>【偵查】</span>
+                        </div></div><div class="log-item" data-index="124" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content"><b>cc&lt;=70 偵查 (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 100 ＞ 100 ＞ 大失敗</b></span>
+                        </div></div><div class="log-item" data-index="125" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">視線巡過架子一圈，為了尋找線索的北川展生專注在眼前的事物而未能注意到那盒落在腳邊的過期食品，在踩上去的瞬間整個人因重心不穩而向後跌坐在地。<br><br>【HP -1】</span>
+                        </div></div><div class="log-item" data-index="126" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">HP :9 → 8</span>
+                        </div></div><div class="log-item" data-index="127" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">瞥了一眼便收回目光，對無法買票一事略感遺憾的陸天允旋過半身，轉而往站務員室過去——本來是這麼打算的。<br>聽到左側傳來一陣騷動，投去目光就看見北川展生瞬間矮下的身影，陸天允不禁挑了挑眉。<br><br>「展生？你還好嗎？需要幫忙嗎？」</span>
+                        </div></div><div class="log-item" data-index="128" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「嘶、是誰來這裡找東西沒放好？」<br>北川展生摔得抽了口氣，揚聲道：「——沒事，被東西絆倒了而已。」<br><br>略微狼狽地從地上爬起來、還不忘將那盒食品撿起來隨便塞到旁邊的架子上，他拍拍身上的衣服，繼續查看商店內部。</span>
+                        </div></div><div class="log-item" data-index="129" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">北川展生你在察看的同時隨意伸手拿起幾樣商品翻看——你隨即意識到，這些商品的保存期限約莫是在一個月前過期的。</span>
+                        </div></div><div class="log-item" data-index="130" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">應了一聲當作有聽到（但不在意對方有沒有），陸天允轉回視線，繼續扒到站務員室的窗邊朝裡看。</span>
+                        </div></div><div class="log-item" data-index="131" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允你由窗邊向著裡頭看去，不大的站務員室最先映入眼簾的是躺倒在裡頭的一具損傷嚴重的男性屍體。<br><br>而由檢票閘門後方才能過去的路口處前方也同樣躺著一具。<br>另外站務員室的桌上放著一本像是被誰使用過的筆記。<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="132" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=46 SAN (1D100&lt;=46) 獎勵・懲罰骰[0] ＞ 77 ＞ 77 ＞ 失敗<br>SAN :46 → 45</span>
+                        </div></div><div class="log-item" data-index="133" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="134" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">哇靠，屍體怎麼像野狗一樣多！<br><br>「這裡有兩隻屍體！」從窗沿邊跳回平面，陸天允扭頭尋向便利商店裡北川展生的身影，邊伸出拇指比了比身後的房間，「裡面好像也有本筆記，我進去看看。」<br><br>說著就打算翻過驗票口進去站務員室。</span>
+                        </div></div><div class="log-item" data-index="135" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">一個月前……？這裡的時間和現實一樣嗎？<br><br>思考到一半被陸天允的聲音打斷，北川展生愣了一下，連忙放下手裡的食物，也快步走了過去。</span>
+                        </div></div><div class="log-item" data-index="138" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">翻過檢票口，眼前通往兩處月台的手扶梯似乎仍然在運行當中。<br><br>隨後映入眼簾的是一具腐爛到無從辨認長相的女屍。<br>而站務員室裡那具損傷嚴重的男性屍體則看上去腹部受到了嚴重的撕裂傷，左臂被砍斷了，身體也多處變形，甚至能看見裸露的內臟流出，死狀相當悽慘。<br><br>北川展生．＜SANC 0/1＞<br>【兩人．偵查】</span>
+                        </div></div><div class="log-item" data-index="139" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=48 SAN (1D100&lt;=48) 獎勵・懲罰骰[0] ＞ 55 ＞ 55 ＞ 失敗<br>SAN :48 → 47</span>
+                        </div></div><div class="log-item" data-index="140" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="141" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=70 偵查 (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 21 ＞ 21 ＞ 困難成功</span>
+                        </div></div><div class="log-item" data-index="142" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=71 偵查 (1D100&lt;=71) 獎勵・懲罰骰[0] ＞ 83 ＞ 83 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="143" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">北川展生你注意到那名損傷嚴重的男性屍體胸前的口袋插著一張足球入場券的小紙片。<br>若是靠近一看，能發現日期寫著今年的7月29日。</span>
+                        </div></div><div class="log-item" data-index="144" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">手臂不見……<br><br>「他的手是被砍斷的欸。這裡的嬰兒已經會拿刀了？」天啊，這可是千百年難得一見的神童！<br>陸天允伸手捏住斷臂處的袖口、提高切面看了看，眉梢也跟著揚了揚。<br><br>端詳片刻便將斷臂擺回原位，沒再騷擾屍體，陸天允轉而拿起桌上的筆記翻閱起來。</span>
+                        </div></div><div class="log-item" data-index="145" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">正打算移開的視線頓住，北川展生瞇了下眼，彎下身取出口袋裡的那張紙片。<br><br>「足球入場券……7月29日的？」<br>記得有在新聞看到這天的球賽消息，如果要更確切的驗證，就是查手機了……他拿出看了一眼，果不其然沒有任何訊號。<br><br>「……不是吧，那也太超過了。」剛看完就聽到了陸天允的話，北川展生臉一黑，隨手將手機塞回口袋，沒有轉頭去確認那邊的情況，而是蹲下身檢查起屍體的狀態。</span>
+                        </div></div><div class="log-item" data-index="146" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【筆記】<br>最初的幾頁似乎是車站員工寫的日誌，後半部的幾頁則像是不同的人分別寫下的筆記。<br>封面沾滿了紅黑色的污漬，本子中間幾頁還有被撕下的痕跡。</span>
+                        </div></div><div class="log-item" data-index="147" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第一頁】（連筆的字跡）<br>7月26日 向坂彬<br><br>我在檢票口附近發現了一具有些腐爛的女性屍體。<br>劉谷真由美，30歲，女性。<br>死因應該是失血性休克。身體各處、尤其是脖子和大腿等處的粗血管都被什麼東西咬斷了，像是人類的牙齒。<br><br>因為我一直很在意不知道什麼時候會進到我口袋裡的鑰匙，所以就去試了一下。<br>好像可以用來開400～499號置物櫃，但用過一次就不見了。<br>以防萬一，我把上鎖的置物櫃號碼寫下來吧。<br><br>400～403、411、414、420～426、430～444、452、456～457、472～476、479、482～484、492～494、498<br><br>我打開了其中的400號，裡面什麼都沒有。<br>現在我準備前往1號、2號月台。<br><br>回來後會在此繼續記錄調查結果。</span>
+                        </div></div><div class="log-item" data-index="148" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第二頁、第三頁】（凌亂的字跡，字寫得很大，佔滿了對開的2頁，而整頁都沾滿了紅黑色的污漬。）<br><br>2號月台 長椅下面　有東西　但別去　有個大傢伙在　贏不了<br>我殺了　2隻小的　關起來　了　3隻　活該<br>它們　看不見　鑰匙　用完後　消失了<br><br><br><br>媽媽對不起</span>
+                        </div></div><div class="log-item" data-index="149" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第四頁】（娟秀的字跡）<br><br>我在站務員室躲了很久，電車來了。<br>終於能得救了嗎？我打算坐上那輛車。<br>我把和菓子放在了四九五號置物櫃裡，雖然不多，但希望能盡量幫上後來的人。</span>
+                        </div></div><div class="log-item" data-index="150" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第五頁】（被粗暴的撕走了）</span>
+                        </div></div><div class="log-item" data-index="151" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第六頁】（和工整一詞幾乎沾不上邊的字，因為非常潦草所以難以辨認。）<br><br>做了那麼多，坂田還是死了。<br><br>就算用新鮮的屍體當誘餌，那群傢伙還是很難纏。<br>早知如此當時就不該逃跑，應該阻止坂田　不不不那不是我的錯！<br><br>只是運氣不好而已，是那傢伙以為她是屍體，我還覺得奇怪，畢竟她身上那麼乾淨。<br>那傢伙說也沒其他辦法了我實在看不下去於是就　不是我的錯。<br>我受夠了。已經什麼辦法都沒有了。要是沒做試膽這種蠢事就好了。<br><br>我等了很久，電車來了。<br>我也決定坐上那輛車。<br>傳聞說404號置物櫃和出口相連，只要打開就能回去，但那裡從一開始就根本沒上鎖。<br><br>我又連開了4個上鎖的櫃子，都是空的。<br>我不知道那輛車上會有什麼，但鑰匙和水都已經沒了，只能死馬當活馬醫了。<br><br>神啊，求求你，請幫幫我。</span>
+                        </div></div><div class="log-item" data-index="152" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【第七頁】（一絲不苟的字跡）<br>8月10日 上岡正仁<br><br>非常感謝這本筆記本的存在。<br>感謝前人的付出，願他們能安息。我就只記錄一下在這裡發生的事吧。<br>124號置物櫃裡有一具失去雙臂的女孩遺體，真是作孽。<br><br>我在檢票口遇到了「它們」，其中1隻被我關進了449號置物櫃。<br>那傢伙在鎖上櫃門之前一直在裡面敲門，但完全關上後就什麼聲音也沒了。<br>它們似乎沒有視力，相反地對著聲音和氣味十分敏感。<br><br>我把找到的前人們的遺物放入了121號置物櫃。<br>如果能回去的話就一起帶走吧。<br>1號月台上沒有它們的身影，但有一具男性屍體。<br><br>站名和方向牌上的字全都看不明白，讓我感覺很不舒服。<br><br>雖然推測出了出口的編號，但我早些時候已經用過手上的鑰匙了。<br>還沒去過的地方只剩2號月台了，在這種情況下如果想要離開，就必須繼續前進。<br>我決定找個能吸引它們注意的東西再出發。</span>
+                        </div></div><div class="log-item" data-index="153" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……沒有能確認屍體身分的證件啊。<br>北川展生在心裡嘆了口氣，帶走了那張球賽入場券，走到正在翻看筆記的陸天允旁邊。<br><br>「筆記上有寫什麼嗎？」</span>
+                        </div></div><div class="log-item" data-index="154" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">反覆翻閱桌上的筆記，陸天允歪了歪頭，姑且先把比較確定的部分指了出來：<br>「唔嗯，如果有車進站，搭上去八九不離十就game over了。」<br>「還有449跟124有屍體，121跟495有遺物。」<br>「怪物有大隻的一隻跟小隻的數隻。沒什麼視力，但聽覺跟嗅覺很好。」<br><br>「兩個人進來的話，鑰匙可能會有四把。」<br>「2號月台有大隻的怪物，但大概也有寶物就是了。」<br>接著他眨眨眼睛，供出自己的猜測。<br>「離開這裡的正確號碼可能不只一個。我目前猜477是正解之一。」</span>
+                        </div></div><div class="log-item" data-index="155" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「不過嘛～」<br>啪、地一聲闔上筆記，陸天允隨手轉交給北川展生，隨即邁開腳步離開站務員室、往剛才的置物櫃走去。<br>「我想先開495看看那個和菓子好不好吃！」</span>
+                        </div></div><div class="log-item" data-index="156" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……我也寫點東西在上面吧，晚點再過去。」<br><br>看著陸天允的背影走遠，北川展生收回目光，用手機將前幾頁筆記的內容拍了下來，額外將幾條重點記到備忘錄中，接著才從口袋掏出習慣帶著的鋼筆，翻到了第八頁紙。<br><br>『8月12日 北川展生<br><br><b>　</b>我和一位朋友進到這裡，目前還未開過置物櫃，上鎖的號碼如下。<br><b>　</b>401～402、411～412、420～426、430～435、438～444、448～449、452、456～457、463、472～477、479、482～484、492～493、498<br><br><b>　</b>由於上岡先生的筆記我帶走了，這裡也寫上他所記錄的號碼。<br><b>　</b>401～40■、411～412、420～426、430～435、438～444、448、452～453、456～457、463、472～476、479、482～484、492～493、498<br><b>　</b>453號被圈了起来，■則是被血污覆蓋無法辨認出正確的數字。<br><br><b>　</b>感謝前面的人，很遺憾有幾位沒能離開。我會將遺物帶走，交還給各位的家人，希望這本筆記本不會再有下一個人看到。<br><b>　</b>p.s. 不建議搭乘電車。找出當次的出口號碼，使用鑰匙解鎖離開最保險。』</span>
+                        </div></div><div class="log-item" data-index="157" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……唉。」<br>寫完最後一筆後不由嘆了口氣，北川展生攤著紙頁等墨水乾，期間走出了站務員室，忍著不適檢視了下已經腐爛的女屍。<br><br>「這應該就是劉谷真由美……身上沒有證件，不知道遺物會不會有。」自言自語地低喃著，他拍去手上的髒污，回去將筆記本闔上，再次翻過檢票口，回到了置物櫃區。<br><br>「怎麼樣，495的和菓子好吃嗎？」<br>他沒將視線投往陸天允，而是逕自走到了121號櫃前，打開櫃門時隨口問道。</span>
+                        </div></div><div class="log-item" data-index="158" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允你敞開了【495號】置物櫃的櫃門，能見裡頭放著印有甜點屋字樣的紙袋。<br><br>若是打開來看，可以確認內容物是裝著葛餅、栗金糰、琥珀羹等等的生糕點（*含水量高、保存期限短需要盡快食用的和菓子）的禮盒。<br>並且已經被拆封過，還少了幾個空位，大概是被拿走食用了吧。<br><br>【陸天允．偵查】</span>
+                        </div></div><div class="log-item" data-index="159" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=71 偵查 (1D100&lt;=71) 獎勵・懲罰骰[0] ＞ 73 ＞ 73 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="160" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">肉眼觀察了下，能看出生糕點沒有變質的跡象、大概還能正常食用。</span>
+                        </div></div><div class="log-item" data-index="161" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯——看起來都不錯欸！看起來還能吃。」<br>品味真好啊，這個人。吹了一聲輕哨，陸天允從包裝裡摸走九個和菓子，再從背包中掏出四個麵包塞進櫃裡交換。<br>重新關好置物櫃的門，他拿著戰利品湊近北川展生。<br>「有葛餅、栗金糰、琥珀羹……你想先吃哪個？」</span>
+                        </div></div><div class="log-item" data-index="162" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……？」<br>剛稍微拉開櫃門的手頓住，北川展生帶著疑問轉頭，見到陸天允手裡的和菓子後，頗為無言地說：「我不用，你吃吧。」<br><br>他擺擺手，又回過頭繼續查看面前的櫃子。</span>
+                        </div></div><div class="log-item" data-index="163" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">北川展生面前那【121號】的櫃門輕而易舉地就打開了。<br><br>映入眼簾的是看上去是不同人持有的提袋或包包等等的隨身物品，最上頭還黏著一張便條紙。</span>
+                        </div></div><div class="log-item" data-index="164" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【便條紙】（筆跡一絲不苟，紙張上到處都是紅黑色的污漬。）<br><br>這些是在這個空間裡發現的東西，恐怕是和我一樣被帶到這裡的人的遺物吧。<br>如果我沒能活著回去，就把這些託付給能從這個世界回去的後來人了。拜託了。<br><br>　　　　　　　　　　　上岡正仁</span>
+                        </div></div><div class="log-item" data-index="165" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……這個叫上岡正仁的人很厲害啊，可惜沒能離開這裡。<br><br>在心裡嘆了口氣，北川展生伸手翻了翻，想找找有沒有什麼能派上用場的東西。</span>
+                        </div></div><div class="log-item" data-index="166" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">翻找著遺物，透過一些證件和個人物品來看能知道這些東西的主人分別為「劉谷」「向坂」「佐佐木」「石卷」「上岡」。不過除此之外並沒有什麼是現在能派上用場的東西。<br><br>【困難偵查】</span>
+                        </div></div><div class="log-item" data-index="167" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=70 偵查 (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 76 ＞ 76 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="168" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">將和菓子扔進背包、重新揹上肩，陸天允側著臉在北川展生翻找時順道瞥過幾眼：「怎麼樣？有認識的人嗎？」</span>
+                        </div></div><div class="log-item" data-index="169" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「認……、」這話太像詛咒，北川展生不確定雙方對認識的定義一不一樣，無言片刻後往旁邊退，讓出了位置：「你自己看吧。」</span>
+                        </div></div><div class="log-item" data-index="170" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=71 偵查 (1D100&lt;=71) 獎勵・懲罰骰[0] ＞ 82 ＞ 82 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="171" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「喔——有欸。劉谷、向坂、上岡。」都是在筆記裡看過的名字。<br>「現在拿？你拿？我拿？一人一半？」</span>
+                        </div></div><div class="log-item" data-index="172" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……我們要離開前再拿吧。」<br>五個人的隨身物品，就算由兩個人分擔，多少也會影響行動，考慮到這裡還有怪物，還是保持方便活動的狀態比較好。<br><br>「說起來，你要開看看477號嗎？要的話就先拿著。」</span>
+                        </div></div><div class="log-item" data-index="173" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【聆聽】或【偵查】</span>
+                        </div></div><div class="log-item" data-index="174" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=50 聆聽 (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 53 ＞ 53 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="175" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=71 偵查 (1D100&lt;=71) 獎勵・懲罰骰[0] ＞ 38 ＞ 38 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="176" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">驀地，陸天允你注意到了從哪處傳來啪嗒、啪嗒的響聲。</span>
+                        </div></div><div class="log-item" data-index="177" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">那聲音似乎正逐漸地靠近，不過一會北川展生你也發覺了同樣的聲音。</span>
+                        </div></div><div class="log-item" data-index="178" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"><b><br><br></b><br>　　<i>啪嗒、啪嗒、啪嗒、啪嗒。</i><br><b><br></b></span>
+                        </div></div><div class="log-item" data-index="179" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你們不禁將視線轉向傳來聲音的方向，然而聲音的來源比你們想像中更接近。<br><br>相隔不到一公尺的地面上，三隻肉色的東西正向你們爬來，那樣子看起來就像剛出生還不到一歲的嬰孩。<br><br>幾隻稚嫩的小手往你們的方向伸長，而其掌心中間那裂開的、宛如窟窿一般的裂口露出了鮮紅的舌頭和一排滑膩發亮的牙齒，沒有嘴唇的口半張著，不停地往地面滴著黏液。<br>隨後肉色的物體抬起了頭，就像依偎在母親身上吃奶的孩子。</span>
+                        </div></div><div class="log-item" data-index="180" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">——那的確是一張嬰兒的臉，但其身上的皮膚凹凸不平，眼睛也被隆起的皮膚壓得幾乎不見蹤影。<br>隨後如同它的兩手一樣，位於面部的那張口也微微張開，滴著津液，然後揚起了嘴角，發出稚嫩的咿呀聲。<br><br>＜SANC 1/1D4＞</span>
+                        </div></div><div class="log-item" data-index="181" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=47 SAN (1D100&lt;=47) 獎勵・懲罰骰[0] ＞ 26 ＞ 26 ＞ 一般成功<br>SAN :47 → 46</span>
+                        </div></div><div class="log-item" data-index="182" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="183" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=45 SAN (1D100&lt;=45) 獎勵・懲罰骰[0] ＞ 50 ＞ 50 ＞ 失敗<br>1D4 (1D4) ＞ 1<br>SAN :45 → 44</span>
+                        </div></div><div class="log-item" data-index="184" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="185" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="186" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">啊……長得跟人太像了反而不太喜歡了。<br><br>全然喪失與其玩耍興致的陸天允瞇了瞇眼，抬手指了指上岡的屍體旁的那個通道口、示意北川展生往那跑，旋即後退幾步，試圖以助跑借力跳過眼前的三隻小怪物，往能通向地上的樓梯奔去。</span>
+                        </div></div><div class="log-item" data-index="187" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【陸天允．DEX+20】</span>
+                        </div></div><div class="log-item" data-index="188" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="189" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=95 敏捷DEX+20 (1D100&lt;=95) 獎勵・懲罰骰[0] ＞ 35 ＞ 35 ＞ 困難成功</span>
+                        </div></div><div class="log-item" data-index="190" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">北川展生略帶驚愕的目光從那嬰兒似的怪物掃過，偏頭朝指向通道的陸天允看去，沉默地點了點頭。<br>吸了口氣，他也往後退了幾步，猛地朝前奔去、想跳過怪物往樓梯去。</span>
+                        </div></div><div class="log-item" data-index="191" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．DEX】</span>
+                        </div></div><div class="log-item" data-index="192" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=58 敏捷DEX (1D100&lt;=58) 獎勵・懲罰骰[0] ＞ 77 ＞ 77 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="193" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．幸運】</span>
+                        </div></div><div class="log-item" data-index="194" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=60 幸運LUK (1D100&lt;=60) 獎勵・懲罰骰[0] ＞ 20 ＞ 20 ＞ 困難成功</span>
+                        </div></div><div class="log-item" data-index="195" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">Secret dice 🎲</span>
+                        </div></div><div class="log-item" data-index="196" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">其中兩隻嬰兒似的怪物朝著陸天允離開的方向同樣飛快地爬去。<br>然而陸天允你才剛踏上樓梯的第一階，抬頭望去，本該燈火通明的地上層此時一片漆黑向遠處延伸過去，見不著盡頭。<br><br>而北川展生的落腳處正巧被移動頗快的嬰兒給擋住了去路，你還來不及反應，沒被帶走的那隻便大張著身上的幾處裂口朝你襲來。</span>
+                        </div></div><div class="log-item" data-index="197" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 62 ＞ 62 ＞ 失敗<br>cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 61 ＞ 61 ＞ 失敗<br>cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 25 ＞ 25 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="198" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="199" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="200" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．閃避】</span>
+                        </div></div><div class="log-item" data-index="201" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=29 閃躲 (1D100&lt;=29) 獎勵・懲罰骰[0] ＞ 63 ＞ 63 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="202" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">1D3-1 傷害 (1D3-1) ＞ 2[2]-1 ＞ 1</span>
+                        </div></div><div class="log-item" data-index="203" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">嬰兒撲往你的腳邊，即便你在瞬間將腳給抽離了卻因為那三張同時咬上的大口而沒能全身而退，小腿處不慎被留下了一口齒痕。<br><br>【北川展生．HP -1】</span>
+                        </div></div><div class="log-item" data-index="204" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">HP :8 → 7</span>
+                        </div></div><div class="log-item" data-index="205" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「——靠。」<br>自小腿傳來的痛楚讓他沒忍住低罵了一聲，北川展生一下子就皺緊了眉頭。<br><br>他身上沒有武器，唯一能稱得上尖銳的物品只有鋼筆……或許能拿來攻擊怪物，但相對的，他被攻擊的機率也會大幅提升。<br>有兩隻被引走了，只剩下一隻而已，路還算寬吧。他深吸了一口氣，忍著痛再次邁開步伐，想繞過那怪物往陸天允那跑。</span>
+                        </div></div><div class="log-item" data-index="206" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">眼見前途無亮，陸天允隨即放棄往上跑的念頭。<br>循著罵聲轉頭就瞥見北川展生被劃破的褲管的小腿，他頓愣一瞬，索性回身朝檢票口踹了腳更靠近自己的那隻嬰兒，邊往地下通道的方向移動。</span>
+                        </div></div><div class="log-item" data-index="207" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．DEX】<br>【陸天允．鬥毆】</span>
+                        </div></div><div class="log-item" data-index="208" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=58 敏捷DEX (1D100&lt;=58) 獎勵・懲罰骰[0] ＞ 94 ＞ 94 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="209" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=50 戰鬥：鬥毆 (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 67 ＞ 67 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="210" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允你興許是沒抓好距離，那腳只踹了個寂寞。<br><br>不過通往地下通道的路暢行無阻，你越發往裡走進，越是能注意到相較漆黑的周圍，前方竟然微微亮著一道白光，不過模糊地看不出更遠處的景象。</span>
+                        </div></div><div class="log-item" data-index="211" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">不僅僅是嬰孩，就連隱隱傳來痛意的傷口都在阻礙著北川展生你的行動。<br>就在你因為傷口分神的同時怪物也再度朝你逼近過去。</span>
+                        </div></div><div class="log-item" data-index="212" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 16 ＞ 16 ＞ 一般成功<br>cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 91 ＞ 91 ＞ 失敗<br>cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 94 ＞ 94 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="213" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="214" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="215" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．閃避】</span>
+                        </div></div><div class="log-item" data-index="216" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="217" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=29 閃躲 (1D100&lt;=29) 獎勵・懲罰骰[0] ＞ 44 ＞ 44 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="218" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">1D3-1 傷害 (1D3-1) ＞ 1[1]-1 ＞ 0</span>
+                        </div></div><div class="log-item" data-index="219" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">牙尖微微劃過你的肌膚，只傳來些許的刮搔感。</span>
+                        </div></div><div class="log-item" data-index="220" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……」<br>或許該慶幸這次沒被咬傷，但被牙齒劃過的感覺也好不到哪去。北川展生有點發毛地閃過怪物，再一次嘗試從旁側跑出去。</span>
+                        </div></div><div class="log-item" data-index="221" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【北川展生．DEX】</span>
+                        </div></div><div class="log-item" data-index="222" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=58 敏捷DEX (1D100&lt;=58) 獎勵・懲罰骰[0] ＞ 68 ＞ 68 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="223" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「喂——展生，還活著嗎——」<br>沒有急著往亮處走，陸天允回頭看了眼隱約只能見到髮頂晃動的北川展生的身影，從包裡摸出和粿子撕開包裝、丟向通道對側的牆角，打算看看追在自己身後的兩隻小怪物吃不吃糖。</span>
+                        </div></div><div class="log-item" data-index="224" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">看來是繞不過去了，北川展生無奈地嘆氣，對陸天允的話也只是揚手揮了揮，表示自己還活著。目前。<br><br>……嗅覺和聽覺較敏銳的話，對其他聲音會有反應嗎？<br>他伸手從口袋掏出一支筆，瞇眼看了看距離，試探著將筆蓋往反方向丟。</span>
+                        </div></div><div class="log-item" data-index="225" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">朝著陸天允的方向飛速爬行的嬰孩在聽見了相反方向傳來的異音後，立馬轉了方向朝那裡爬行過去。<br>而北川展生那裡也是同樣地，在筆蓋落地的瞬間、彷彿被那陣清脆的響聲給吸引過去似地，往那處胡亂地撕咬著。</span>
+                        </div></div><div class="log-item" data-index="226" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……」算了，能跑就好。<br><br>趁著怪物往筆蓋那邊爬去的空隙，北川展生儘量放輕腳步，迅速走往陸天允那邊。<br>「……繼續走？還是你打算去哪？」他壓低聲音問。</span>
+                        </div></div><div class="log-item" data-index="227" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">瞟了眼北川展生的小腿，確認對方的傷勢還沒嚴重到走路開始跛腳，便也邁開腳步繼續向前。<br>「嗯，先過去看看吧。」</span>
+                        </div></div><div class="log-item" data-index="228" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你們朝著光源持續前進——<br><br>越是往裡走光的範圍就越大，直至你們連本人都走進了白光之中，回過神來，眼前還是和方才相同的大平站。<br>然而你們毫無掉頭的印象。<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="229" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=44 SAN (1D100&lt;=44) 獎勵・懲罰骰[0] ＞ 42 ＞ 42 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="230" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=46 SAN (1D100&lt;=46) 獎勵・懲罰骰[0] ＞ 67 ＞ 67 ＞ 失敗<br>SAN :46 → 45</span>
+                        </div></div><div class="log-item" data-index="231" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="232" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「……啊，鬼打牆。」這個他熟。<br><br>眼見通道旁的小怪物們還在撕咬他們之前拋出的誘餌，陸天允果斷折彎轉去檢票口，邊同北川展生分享樓上一片漆黑的情報。<br>繞過檢票閘門，陸天允左右看了看兩個月台標誌。<br><br>「先去1號站台嗎？」<br>邊問，他邊朝1號月台通道口的電梯過去，打算先看看裡頭有沒有東西。</span>
+                        </div></div><div class="log-item" data-index="233" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">畢竟身在都市傳說裡了，鬼打牆好像也不是那麼意外……才怪。即使親眼目睹過屍體與怪物、還有那些弔詭的經歷，每次碰到仍然會感覺毛骨悚然。<br><br>「好……你該不會想搭電梯下去吧？」話才說到一半，看見陸天允走向的地方，北川展生愣了一下，連忙跟上。</span>
+                        </div></div><div class="log-item" data-index="234" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「電梯有聲音欸，不好吧。」</span>
+                        </div></div><div class="log-item" data-index="235" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">一號月台前的電梯此時停在這處的樓層，從如常顯示的數字來看，似乎仍然在運行當中。</span>
+                        </div></div><div class="log-item" data-index="236" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……總覺得裡面關著東西。」<br>北川展生上下打量著電梯，這裡的電梯不是透明的，如果不打開電梯門，他們看不見轎廂內部的模樣。</span>
+                        </div></div><div class="log-item" data-index="237" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">深有同感。<br><br>陸天允扼腕地東瞧瞧西瞧瞧眼前的鐵盒，確定沒能從哪個空隙向裡窺探後才直回身，轉眼看向北川展生：「想開嗎？還是下去1號月台再打開？」</span>
+                        </div></div><div class="log-item" data-index="238" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「不想。」北川展生果斷回道，他還想要命。<br>「……先下去月台看看吧，開不開再說。」</span>
+                        </div></div><div class="log-item" data-index="239" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「喔……好吧。」黃豆人垂手.jpg</span>
+                        </div></div><div class="log-item" data-index="240" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你們朝著通往1號月台的電扶梯處走去。<br>若是確認上方的標示牌，雖然能確認到這是大平站的上行線，不過本該寫著通行方向的地方此時卻讓人難以讀懂。<br><br>【靈感】</span>
+                        </div></div><div class="log-item" data-index="241" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=74 智力INT (1D100&lt;=74) 獎勵・懲罰骰[0] ＞ 12 ＞ 12 ＞ 極限成功</span>
+                        </div></div><div class="log-item" data-index="242" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=70 智力INT (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 7 ＞ 7 ＞ 極限成功</span>
+                        </div></div><div class="log-item" data-index="243" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你們確信目的地應該是用自己能讀懂的語言所書寫的才對，但不知為何，自己卻無法理解那些文字的含意。<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="244" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=45 SAN (1D100&lt;=45) 獎勵・懲罰骰[0] ＞ 33 ＞ 33 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="245" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=44 SAN (1D100&lt;=44) 獎勵・懲罰骰[0] ＞ 7 ＞ 7 ＞ 極限成功</span>
+                        </div></div><div class="log-item" data-index="246" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">繼續下行來到的1號月台，在你們眼前的是一具躺倒在地的腐爛的男性屍體。<br><br>而本該在對向的2號月台此時距離像是被拉長了一般，只能模糊見到遠處有模糊的光源，考慮到空間整體的配置分明不會這麼遙遠的才對。</span>
+                        </div></div><div class="log-item" data-index="247" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">要是想知道2號月台的情況，大概只能實際去一趟了。<br>將目光從對面收回，北川展生抬眼看了看1號月台，邁步靠近那具屍體。<br><br>可能是筆記第一頁的向坂。他心想著，蹲下身稍微檢查了下屍體。</span>
+                        </div></div><div class="log-item" data-index="248" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">將搜刮遺物的工作交給北川展生，陸天允信步繞開屍體，走向更深處確認站牌、時刻表和長椅。</span>
+                        </div></div><div class="log-item" data-index="249" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">那具腐爛的男屍身上四處都是被咬出的傷口，死因不用多想也能清楚大抵是失血過多吧，而他的手裡握著一把沾滿乾涸血跡的軍刀，胸前的口袋微微鼓起，似是放著什麼東西。</span>
+                        </div></div><div class="log-item" data-index="250" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允則走向更深處空蕩蕩的長椅前方，頭頂的站牌寫著大平站。前一站是空白，下一站卻仍然是無法理解含意的文字。<br><br>而一旁的時刻表也是。<br>只是，在那之中唯獨有一條能夠讀懂的句子。<br>不過那句子的字跡異常模糊，部分已經難以辨認了，還全都是用平假名所書寫的。</span>
+                        </div></div><div class="log-item" data-index="251" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【時刻表上的文字】<br><br>「為亻××來××忄×車」（あ××のための××きゅうし×）<br><br>【日語】</span>
+                        </div></div><div class="log-item" data-index="252" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">下意識聯想到站務員是那具斷臂的屍體，北川展生的視線一滯，輕飄飄地掠過那把刀，謹慎地摸向鼓起的口袋。</span>
+                        </div></div><div class="log-item" data-index="253" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=(85/2) 教育EDU/2 (1D100&lt;=42) 獎勵・懲罰骰[0] ＞ 85 ＞ 85 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="254" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">屍體的口袋中是一團被揉成球狀的紙張，看上去是被撕下過的筆記紙。</span>
+                        </div></div><div class="log-item" data-index="255" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【被撕下的筆記頁】（圓圓的字跡，到處都是水滴乾了之後留下的水漬。）<br><br>今天是8月4日。<br><br>我是市立小坂井高中2年級的石卷理惠。<br>我在站務員室發現了這本筆記，現在正在記錄我所遇到的事。<br><br>現在不是害怕的時候。<br>為了從這裡回去，我必須努力。<br>我也學著向坂先生把上鎖的置物櫃號碼記了下來。<br><br>401～403、411～412、420～426、430～444、448、452、456～457、463、472～476、479、482～484、491～494、498<br><br>嗯……雖然和向坂先生那時差不多，但好像稍微有點差別。<br>我去看了筆記上所寫的495號置物櫃。<br><br>裡面放著看起來又漂亮又好吃的生糕點？禮盒？<br>那時我注意到一件事，姑且寫下來吧。<br><br>用來給和菓子禮盒保溫的冰袋還有一半都沒融化，過了3天還沒化，怎麼想都不正常吧？<br><br>我一個人很難逃出這裡，所以我決定等別人來一起想辦法。<br>如果我的猜測是對的，那麼即使不吃不喝也能待很久。<br>但這種構想還充滿不確定性，我想和其他人實際會合一次、確認可行性之後再詳細記述。<br><br>如果之後有人讀到這本筆記的話，請打開124號置物櫃，拜託了。<br>我把這些資訊留在這裡，也算是以防萬一。<br><br>（從這裡開始到處都是水漬乾涸過的痕跡）<br><br>爸爸媽媽，感謝你們一直以來的照顧，我很幸福。<br>很抱歉以這種方式消失在你們的世界中，但我是為了幫助小孩才來到這裡的，請為你們如此有勇氣的女兒驕傲吧。<br>理沙也要聽爸爸媽媽的話，好好生活哦。<br><br>　　　　　　石卷理惠</span>
+                        </div></div><div class="log-item" data-index="256" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">而陸天允並沒能從那句子中解讀出什麼來。</span>
+                        </div></div><div class="log-item" data-index="257" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">認真地讀完筆記紙上的字跡，北川展生緊皺著眉看了眼地上的男性屍體，又看回最末尾的遺書。<br><br>石卷理惠。……才高二啊。<br>他記得筆記上寫著，124號裡有一具失去雙臂的女孩遺體，該不會……<br><br>無論是哪種猜測，都不是好事。北川展生按了按眉間，小心地將紙張的皺折按平、重新折成方形，放進自己的口袋裡。<br>「我會交給你的父母的，石卷同學。」他自言自語地說著，從屍體手裡拿走了刀，往裡走近陸天允。<br><br>「好消息，我們有武器了。」他揚了下手裡的刀，隨後又拍了拍自己的口袋。<br>「屍體身上有筆記本被撕下來的那頁紙，上面也寫了一組上鎖的號碼，我先收起來了，等會給你看。」<br>「這邊有找到什麼線索嗎？」</span>
+                        </div></div><div class="log-item" data-index="258" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「哦，武器！說來我身上好像也有把瑞士刀……」<br>撓了撓臉頰，陸天允邊隨口回應北川展生，邊扳正原先歪著在研究詭異片假名的頭，伸手指了指那串模糊的字跡。<br>「展生你看得懂這行字嗎？感覺有點像『為什麼會來的特快車』？」</span>
+                        </div></div><div class="log-item" data-index="259" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">為什麼會來的……什麼？<br><br>沒聽懂陸天允在說什麼，北川展生帶著疑問往他指的方向看去。</span>
+                        </div></div><div class="log-item" data-index="260" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【日語】</span>
+                        </div></div><div class="log-item" data-index="261" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=75 母語：日語 (1D100&lt;=75) 獎勵・懲罰骰[0] ＞ 76 ＞ 76 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="262" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【燃燒幸運．LUK -1】</span>
+                        </div></div><div class="log-item" data-index="263" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">LUK :60 → 59</span>
+                        </div></div><div class="log-item" data-index="264" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">仔細一看，北川展生你覺得那句子像是寫著「為他而來的靈櫃車（あのこのためのれいきゅうしゃ）」。</span>
+                        </div></div><div class="log-item" data-index="265" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「看起來像是『為他而來的靈櫃車』。」<br>「……是在說電車吧。」搭上電車的下場可想而知。</span>
+                        </div></div><div class="log-item" data-index="266" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯？」意料之外的詞彙。<br>「好吧。那你現在想按電梯了嗎？」意料之外的話題。</span>
+                        </div></div><div class="log-item" data-index="267" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">到底是多想看電梯？北川展生無言了會，低下目光思索著看著刀。<br><br>「有武器的話，或許可以看看……」想了想，他抬手將刀遞過去：「你拿著吧，剛才你也看到了，我的體力不怎麼樣，大概也用不好。」</span>
+                        </div></div><div class="log-item" data-index="268" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「啊？喔，也行。」<br>欣然接下染血的軍刀，再摸出瑞士刀充當雙刀的桐谷天允立刻按下電梯的上樓鍵，隨後拉著北川展生往手扶梯退開保持安全距離。</span>
+                        </div></div><div class="log-item" data-index="269" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"><br><br>——叮。<br><br></span>
+                        </div></div><div class="log-item" data-index="270" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">傳來了電梯抵達的響聲。<br>然而待電梯門敞開，那裡頭空無一物。</span>
+                        </div></div><div class="log-item" data-index="271" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「誒……？沒東西？」真的假的？<br>有些狐疑的陸天允踏出了前往電梯的腳步。</span>
+                        </div></div><div class="log-item" data-index="272" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「喂、等等。」北川展生眼明手快地拽住了陸天允的後領。<br>「沒東西是好事，你還希望冒出怪物？要上去的話走樓梯。」</span>
+                        </div></div><div class="log-item" data-index="273" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">突然有點想在這裡玩異世界電梯看看能不能連通到現實世界的人最後只好扼腕地步行上樓了。<br>「接下來去2號月台？」沒有存檔點的BOSS戰。</span>
+                        </div></div><div class="log-item" data-index="274" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「前面幾個人好像還沒去過2號月台……」他回想著筆記本上的內容，點了點頭：「不知道會有什麼，小心一點。」</span>
+                        </div></div><div class="log-item" data-index="275" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「好～」<br>在下樓前把軍刀還給北川展生，陸天允順便拿出幾塊麵包拆封備用。</span>
+                        </div></div><div class="log-item" data-index="276" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">有點懷疑麵包能不能引走怪物，不過北川展生只是多看了一眼，沒多說什麼。</span>
+                        </div></div><div class="log-item" data-index="277" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">從手扶梯走回上一層，接著又轉往2號月台的手扶梯走去。看來這處的手扶梯沒有在運行。<br>若是確認上方的標示牌，能確認到這裡是大平站的下行線，而文字同樣無法理解。<br><br>【偵查】和【聆聽】</span>
+                        </div></div><div class="log-item" data-index="278" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=71 偵查 (1D100&lt;=71) 獎勵・懲罰骰[0] ＞ 38 ＞ 38 ＞ 一般成功<br>cc&lt;=56 聆聽 (1D100&lt;=56) 獎勵・懲罰骰[0] ＞ 88 ＞ 88 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="279" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="280" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=70 偵查 (1D100&lt;=70) 獎勵・懲罰骰[0] ＞ 51 ＞ 51 ＞ 一般成功<br>cc&lt;=50 聆聽 (1D100&lt;=50) 獎勵・懲罰骰[0] ＞ 78 ＞ 78 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="281" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="282" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你們查覺到腳下散落著什麼像是被破壞過後的金屬碎片，從腦中能拼出的造型來看，那或許是一塊手錶。</span>
+                        </div></div><div class="log-item" data-index="283" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">感覺到腳底似乎踩到了什麼，北川展生警覺地止住腳步，低頭看了一會後彎腰撿起。<br><br>「碎片？這是手錶吧……之前的誰在這摔壞的嗎？」</span>
+                        </div></div><div class="log-item" data-index="284" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯～感覺可以拿著等遇到怪物丟去鐵道那邊吸引注意力，但你小心別被割到了喔。」<br>從腦袋和嘴裡冒出的只有冷漠的實用性主義，陸天允旋了旋手臂、拉開有些僵硬的肌肉，小心翼翼地繼續握著瑞士刀下行。</span>
+                        </div></div><div class="log-item" data-index="285" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「啊，等等。」<br>抬眼就見陸天允要走下樓梯，北川展生伸手抓住他，捏著碎片的那手順勢將東西往下拋，同時解釋：「如果底下有怪物應該能聽到動靜。」<br><br>他們不是一定得下去月台，要是真有怪物在最好避開。</span>
+                        </div></div><div class="log-item" data-index="286" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">細小的金屬塊順著北川展生所拋出的弧度墜落，最終砸在最底部的平台上。<br><br>然後，有什麼聲音傳了過來。</span>
+                        </div></div><div class="log-item" data-index="287" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">那是什麼巨大的肉塊正在蠕動或是拖行在地面上的聲音，隨著聲音越發靠近，能從上方視野可見之處確認到聲音的主人足足有約莫兩公尺高，就像是先前那嬰兒怪物膨脹後的樣子。<br><br>不同的是它的手異常臃腫，大到幾乎都要能蓋過你們的頭部。黏膩的唾液從他的三張嘴裡滴落，在金屬聲完全停止之時那怪物也像是失去興趣地再度拖著身體消失在你們視野裡見不到的地方了。</span>
+                        </div></div><div class="log-item" data-index="288" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">——怎麼看都很不妙。<br><br>北川展生臉色一變，立刻拉著陸天允倒退幾步。</span>
+                        </div></div><div class="log-item" data-index="289" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content"><b>天啊！超級巨嬰！</b><br><br>或許是尺寸巨大到脫離了人類的範疇，一探究竟的興致死灰復燃，陸天允才跟著慣性後退幾步就定住雙腳，瞠大了雙眼盯著底部的月台。<br><br>「等等、等等。我想測試一下他的智力……」<br>倒也沒掙脫北川展生的魔爪，陸天允從善如流維持著當前的姿勢，朝左下方連著包裝一起拋出麵包，過了五秒才朝右下拋出另一塊。<br>「如果他會被右邊那個吸引走的話，或許就可以避開他了。」</span>
+                        </div></div><div class="log-item" data-index="290" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">超級巨嬰被你的麵包一陣吸引到輾過了右下那塊麵包，現在你有一塊沾滿唾液或是什麼別的液體的扁麵包了。</span>
+                        </div></div><div class="log-item" data-index="291" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">太棒了！這位巨嬰甚至大腦發育不全！<br><br>「你看到了吧？他是弱智！弱智！」<br>待那坨臃腫的三口肥肉再次離開視野，陸天允躁動地拍了拍北川展生的手背，目光狂熱閃爍，連語速也加快了幾分。<br>「長椅——去拿長椅下的東西就回來。不會跟他正面對決的。」<br>「要是被發現的話，只要用其他噪音分散注意力就可以了！你也看到了，他沒有多聰明！」<br><br>「……唔。」<br>輕得像氣音的嗓聲宛如現才想到什麼而頓住一瞬，陸天允旋即眨了眨眼，從背包裡又摸出好幾塊麵包跟糖果遞向北川展生。<br>「嗯，不然展生你就在樓梯這邊幫我把風？看到情況不對的話，就幫我往反方向丟東西引開他。」</span>
+                        </div></div><div class="log-item" data-index="292" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……唉。」北川展生已經嘆了不知道第幾次氣。<br><br>他和陸天允只是素不相識的陌生人，但在短暫的時間內，也大概明瞭對方是怎麼樣的人——好奇心旺盛、與常人相異的膽子，簡而言之就是趕著送死。<br>但不得不說，陸天允確實有本事這樣行動，他是完全沒辦法陪著一起，不拖後腿就不錯了。<br><br>「好吧。」北川展生萬分無奈地從陸天允手裡接過東西，同時將刀遞過去：「真的沒辦法的話別執著拿東西，先跑上來，那怪物大概爬不上來。」否則早就上來了。</span>
+                        </div></div><div class="log-item" data-index="293" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「哼哼～沒問題！」<br>愉快地比了個OK接過小刀，陸天允卸下背包、快速暖完身，深呼吸一口氣後，便抱著幾塊麵包拔腿奔下樓。</span>
+                        </div></div><div class="log-item" data-index="294" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">腳步才正踏下2號月台的平台，不遠處的巨型肉塊便似是注意到了陸天允移動時所傳來的響聲，慢慢轉向這頭。<br>三張嘴裡發出詭異的嗚吟聲，尖銳得像是在笑一般，甚至讓你覺得它看起來像是嘴角上揚了似的。<br><br>你還未能反應，那怪物便向著你的方向張著大口襲來。</span>
+                        </div></div><div class="log-item" data-index="295" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">——開始覺得像是在玩龍與地下城了！<br><br>召喚師陸天允的步伐片刻未停，誘餌麵包倒是早有準備地扔向了1號月台方向的地面，試圖拉開與巨嬰的距離好能順利抵達長椅那邊。</span>
+                        </div></div><div class="log-item" data-index="296" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【隱密行動】</span>
+                        </div></div><div class="log-item" data-index="297" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=20 隱密行動 (1D100&lt;=20) 獎勵・懲罰骰[0] ＞ 48 ＞ 48 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="298" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">麵包被一個輕巧地丟了出去，砸在2號月台的鐵軌附近。然而相較你的腳步聲似乎沒能更多地將怪物的注意力吸引過去。<br><br>隨即一隻腫脹的巨手往你的身上撕咬過去。</span>
+                        </div></div><div class="log-item" data-index="299" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">cc&lt;=30 阿姆阿姆 (1D100&lt;=30) 獎勵・懲罰骰[0] ＞ 83 ＞ 83 ＞ 失敗</span>
+                        </div></div><div class="log-item" data-index="300" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">同樣大得滲人的牙擦過了你身側的空氣。<br>要不是那怪物的行動顯然比上層的嬰孩還要遲緩，自己現在肯定就會完蛋了也說不定吧。</span>
+                        </div></div><div class="log-item" data-index="301" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">啊——都忘了穿鞋跑步的分貝不低了。<br>不過這種程度的攻擊說不定展生也能撐住欸？<br><br>僅瞟了眼堪堪擦過身側的大嘴，陸天允沒再浪費誘餌，轉而加快速度跑到長椅邊——<br><br>等等。那啥？<br><br>瞥見深處電梯門前存在一動不動的黑影，他不禁急停腳步，慢了半拍才想起要回身朝樓梯口猛砸一塊麵包過去引走怪物，將視線投往據說藏有寶物的長椅下方。</span>
+                        </div></div><div class="log-item" data-index="302" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">你止住了步伐，屏住氣息，看著眼前因你那拋擲的動作而頓了下身子的巨型肉塊。<br><br>近在咫尺才能聞到的臭氣嗅入鼻腔令你不自覺有些反胃，擠壓得扁形的眼睛理所當然地沒能睜開，卻像是在探尋你的身影一般往你身上靠近。</span>
+                        </div></div><div class="log-item" data-index="303" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">——然後略過了你。<br>怪物直直地向著麵包落地的方向爬行過去，有其他異音響起之前大概不會再次專注於其他的目標吧。</span>
+                        </div></div><div class="log-item" data-index="304" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">而你此時才終於能瞥見，長椅下方放著一把貼有【111號】標籤的鑰匙。</span>
+                        </div></div><div class="log-item" data-index="305" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">111——過來時候的那格？<br><br>見著意料之外的東西，錯愕瞬間明晰地浮上陸天允的面龐。<br>困惑地挑了挑眉，他轉動目光，先確認了眼怪物的行動才再看向站牌和時刻表。</span>
+                        </div></div><div class="log-item" data-index="306" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……底下沒事吧？<br>在樓梯口遠遠見到怪物的動作，北川展生下意識屏住呼吸，皺著眉往月台看，想看看陸天允在幹什麼。<br><br>要是遇到危險，應該會喊……吧？他不太確定地想。</span>
+                        </div></div><div class="log-item" data-index="307" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">怪物目前正背著你，若是沒有動靜的話似乎不會引來那東西的注意。<br><br>趁著這個時機你看向了兩處，站牌上寫著大平兩字的站名，然而前後站都是空白的狀態。<br>而時刻表也同樣是一片空白。</span>
+                        </div></div><div class="log-item" data-index="308" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">好……好沒用……<br><br>忍住衝著一片空白的標示牌浮誇嘆氣的欲望，陸天允小心翼翼彎身撿起椅子底下的鑰匙，旋即拋了塊麵包到時刻表後方、掩蓋自己行動的噪音。<br>眼見確認巨嬰被吸引過去，陸天允一股作氣向著樓上狂奔。</span>
+                        </div></div><div class="log-item" data-index="309" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【DEX】</span>
+                        </div></div><div class="log-item" data-index="310" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=75 敏捷DEX (1D100&lt;=75) 獎勵・懲罰骰[0] ＞ 44 ＞ 44 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="311" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">興許是被一再掉落的麵包分走了注意力，怪物往那瞥去了一瞬，然而這麼點時間反而讓你有足夠的時間大步跨上扶梯。<br><br>三步併兩步地向上奔去，怪物龐大的身軀被卡在兩側扶手的中心又繼續向內擠去，卻始終沒能離開2號月台的範圍之內。</span>
+                        </div></div><div class="log-item" data-index="312" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「——好欸，達陣！」<br>成功抵達地下層平面，陸天允吁出口氣、舒展笑容，朝北川展生揚了揚自己的戰利品。<br>「111號鑰匙。超級正解！」</span>
+                        </div></div><div class="log-item" data-index="313" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">上下看了看陸天允的模樣，沒看出對方有受傷的樣子，北川展生也鬆了口氣，笑了笑：「沒事就好。原來筆記說的東西是鑰匙。」<br><br>「111號是原本的櫃子吧……讓我們過來的那個。」他又看了眼月台，「你有急著走嗎？我想再去一趟站務員室，把2號月台的情報補上去。」</span>
+                        </div></div><div class="log-item" data-index="314" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯？好啊。」說不定待會還能聽到列車進站的廣播。<br><br>反正都逛遍了還拿到了鑰匙沒有回家壓力，陸天允欣然點頭答應，說著邊跨開腳步往站務員室過去。<br><br>「2號月台的站牌只有『大平』兩個字，但前後站的標示跟時刻表都是空白的。」<br>「底下只有那隻巨嬰——喔，好像還有半截屍體在電梯門口。不過我沒過去看就是了。」</span>
+                        </div></div><div class="log-item" data-index="315" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">北川展生愣了愣，點頭道：「沒看也好，風險太大了，還是活著重要。」<br>他雖然有意將其他人的遺物帶離開，但前提是兩人是安全的。<br><br>瞥了眼那三隻還在蠕動的怪物，他小心地放輕腳步，重新進到站務員室，將筆記本翻到自己剛才寫的那頁，於最末尾補充：<br><br>『2號月台有巨型怪物，智力與嬰兒怪差不多，可以靠聲音分散注意力。<br>長椅底下是鑰匙，但我們拿走了，無法確定後來的人是否還能拿到。』<br><br>「好了，我們走吧。」北川展生收起筆。「那把刀……等等放在置物櫃旁邊好了。這裡應該會保持原狀，要是有人誤入也比較好對付怪物。」</span>
+                        </div></div><div class="log-item" data-index="316" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">默默（讓攝影機）看著北川展生留完言，陸天允含糊地應過一聲、伸了個懶腰，悠悠踏離站務員室，轉往置物櫃的方向前進。<br><br>「啊～這麼說來，還不知道他們怕不怕火耶。」摸出背包裡的火柴盒跟打火機，陸天允興致勃勃地望了眼充滿雜物的便利商店。話題倒是換了一個：「我們現在有三把鑰匙對吧。要開111、477，還是哪間？」</span>
+                        </div></div><div class="log-item" data-index="317" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">全當沒聽到關於火的話，北川展生想了想。<br>「我也沒幫上什麼忙，就看你想開哪個櫃子吧。」</span>
+                        </div></div><div class="log-item" data-index="318" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯，這麼說的話我倒是都想開開看耶。」<br>陸天允撓撓臉頰，打開121號櫃門，將裡頭的遺物堆逐一拉扒出來遞給北川展生，自己也分擔了近半的重量。<br><br>「那就先開開看477吧！」<br>將111號鑰匙放進121號置物櫃、關起櫃門，陸天允摸出口袋裡的鑰匙，對著477號的門鎖就要插進去。<br>「雖然有點意外沒找到其他鑰匙、沒法多開幾個門就是了。」跟坂田一起的那個人究竟是從哪湊出四把鑰匙的？<br><br>——不過，要是成功了的話，之後進來的人會不會覺得難度太低很無聊啊？</span>
+                        </div></div><div class="log-item" data-index="319" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">仔細地將遺物拿好，能背的背上、小的裝進背包，對陸天允的話北川展生自然沒意見，點了點頭說好。<br><br>「能活著離開就很好了，別想了。」</span>
+                        </div></div><div class="log-item" data-index="320" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">陸天允你插上鑰匙，轉開鎖後敞開了櫃門，能看見裡面放著一本寫著【冥界線大平站站內指南】的手冊、看上去像是日記的筆記以及【101號】鑰匙。<br><br>而原先插在鎖上的那把【沒有標籤的鑰匙】則是在轉瞬間消失在視野之中。</span>
+                        </div></div><div class="log-item" data-index="321" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">哇靠！居然還有DLC！？<br><br>一刻也沒有為消失的無印鑰匙哀悼，緊接而來的是陸天允興高采烈地掏出櫃裡的東西。<br>將日記丟給北川展生，他則是快樂地翻開冥界線大平站站內指南看了起來。</span>
+                        </div></div><div class="log-item" data-index="322" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">……唉。<br>相比起陸天允的興奮，北川展生就顯得有些失望。<br>但至少不是冒出怪物。他心想，翻開了手裡的日記。</span>
+                        </div></div><div class="log-item" data-index="323" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【冥界線大平站站內指南】<br><br>致各位乘客。<br>歡迎您來到冥界線大平站。<br>為了客戶和沿線更美好的未來，黃泉電鐵將以最舒適的環境和優質的服務迎送四方乘客！<br><br>&lt;致還活著的乘客&gt;<br><br>如果您因意外來到這裡，或不了解此處，代表您陽壽未盡。<br>在這種情況下，請勿搭乘列車，並請迅速返回。<br><br>出口為101號投幣式置物櫃。<br><br>※現在，受不明存在影響，車站功能和列車運行發生了故障。<br>我們已經組織全體員工全力搶修，但尚不確定能否恢復正常運作。<br>給您的出遊帶來不便，我們感到萬分抱歉。<br>望各位乘客諒解。</span>
+                        </div></div><div class="log-item" data-index="324" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">【某人的日記】<br><br>去年的9月27日<br>我將被授予傳承神子血脈的使命。<br>父母和大家都很高興，跟我說做得好。<br>但在自豪的同時，我也感到了不安。<br><br>去年的11月11日<br>我向大學的朋友訴說了這些煩惱。<br>她勸我說那個組織有問題、孩子被生下來也是一種虐待等等的……<br><br>我不相信。<br><br>1月17日<br>那天和朋友不歡而散之後，她說的話一直在我腦海中揮之不去。<br><br>我一邊思考著這些，一邊繼續參加集會，但我發現我無法再像以前一樣相信這些了。<br>這樣做真的是對的嗎？為什麼以前什麼都沒想過，一直視而不見？<br><br>3月2日<br>有東西動了。<br>那一瞬間我突然感到寒毛倒豎。<br>我跑進廁所了。<br>孕吐的時期早就過去了，我到底孕育了什麼？<br><br>4月13日<br>我不能把它生下來怎麼辦。<br><br>我應該在它出生的時候就把它扼殺在襁褓之中，但是會裡的人肯定不會允許的。<br>還有爸爸和媽媽，畢竟他們是那麼的期待。<br><br>他們看著我的眼睛裡都充滿了興奮。<br>我不能說我不想生，絕對不會有好下場。<br><br>6月19日<br>寶寶變得好動了。<br>我害怕的同時也有些憐憫。<br><br>但我很明白，那並不是什麼可愛的存在。<br>如果能就這樣永遠不用生下來就好了，它就會一直是我可愛的寶寶了。<br><br>7月4日<br>越是不想的時候，時間就過得越快，我還在煩惱的時候，就已經要臨盆了。<br>絕對不能讓它降生在這個世界上——我的這種想法越來越強烈。<br><br>7月12日<br>果然不該說出來　必須逃走　我不想死。</span>
+                        </div></div><div class="log-item" data-index="325" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">日記上的內容讓北川展生一下子就皺緊了眉，他翻到最後一頁，忽地想起2號月台的龐然大物，以及此刻仍在不遠處爬行蠕動的嬰兒怪物。<br><br>……這本日記的主人是誰、現在在哪，還活著嗎？<br>這些問題大概很難得到答案，也與他們無關了吧。<br><br>他在心底嘆著氣，轉頭看向拿著另一本冊子的陸天允：「裡面寫了什麼？」</span>
+                        </div></div><div class="log-item" data-index="326" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">最舒適的環境和優質的服務？<br><br>對手冊上的敘述略感納悶地抬起眼環顧了下四遭才繼續往後閱讀，陸天允盯著文末的備註摸摸下巴，撈出鑰匙看了看，又面帶困擾地將頭微微歪向一側。<br><br>「嗯～101號是官方指定的出口。但現在車站功能故障，不確定能不能正常運作。」<br>「雖然開開看就知道了，但要是一次就開到正解不覺得很虧嗎？」言下之意就是想再看看別的櫃子找其他DLC不過目前尚無任何想法要開誰。</span>
+                        </div></div><div class="log-item" data-index="327" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">很虧……嗎。<br>北川展生沉默了幾秒，決定無視這句話。<br><br>「我的鑰匙也給你吧，看你還想開哪個……喔，還有剛才找到的筆記。」<br><br>他將手伸進口袋，想拿那把自從來到這裡後，憑空冒出來的鑰匙。摸索時指尖碰到了折好的紙條，便也拿了出來，和鑰匙一起放到陸天允手上。</span>
+                        </div></div><div class="log-item" data-index="328" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯？喔，都忘了還有這件事。謝啦。」<br><br>攤開紙條，發覺那張曾被揉爛的紙頁上並沒有什麼特別的，足以讓人想特地撕下帶在身上的資訊——嘛，頂多裡面關於124號櫃的敘述跟最新的版本相悖？——陸天允眨了下眼睛，將東西交還回去。<br><br>「看來每次額外鎖上的應該就是放著離開指南的格子了。雖說從向坂到石卷之間多鎖了兩格——」<br>話語猛地一頓，他的臉上登時浮現恍然大悟的神情。<br>「哦！那兩隻被殺死的怪！」這樣啊。原來才會多鎖兩格！</span>
+                        </div></div><div class="log-item" data-index="329" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「嗯，雖然邏輯不難，但需要前面有人留下上鎖的號碼。」收好紙條，北川展生點了點頭。<br>「如果論壇上那篇貼文是真的，那他的運氣確實很好。」</span>
+                        </div></div><div class="log-item" data-index="330" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「412、448跟463……」<br>將從北川展生那收到的另一把無印鑰匙捏在指尖把玩，陸天允邊低聲念著石卷那回比向坂多出的數字，視線邊尋往那三格上鎖的置物櫃。<br><br>假如那人是費盡千辛萬苦終於把嬰兒小怪殺了、想塞進置物櫃關起來——<br>正常來說，應該會往最順手的位置塞吧？所以是靠人體中間的448跟463嗎？<br>但412跟463的尾數又很接近……<br><br>「咳。」還在412跟448之間猶豫的陸天允決定詢問同行觀眾的意見：「姑且問下，展生，如果我們開出嬰兒屍體，你會怎麼樣嗎？」</span>
+                        </div></div><div class="log-item" data-index="331" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「……不會。」別是活著的就好。</span>
+                        </div></div><div class="log-item" data-index="332" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「好！」於是趁人反悔之前眼急手快地把鑰匙插進了412號櫃。</span>
+                        </div></div><div class="log-item" data-index="333" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">插入鑰匙打開櫃門，只見裡面是一大塊的肉色物體。<br><br>它似乎對流動的空氣產生了反應，發出稚嫩的咿呀聲。<br>緩慢伸往門外的那隻手掌中心​​開裂，從窟窿裡露出了鮮紅的舌頭和一排滑膩發亮的牙齒，像一隻飢餓的猛獸一樣口水漣漣。<br><br>而後肉色物體抬起了頭——那是一張嬰兒的臉，但皮膚凹凸不平，眼睛也被隆起的皮膚壓得不見蹤影。<br><br>對，又一隻怪物。<br><br>＜SANC 0/1＞</span>
+                        </div></div><div class="log-item" data-index="334" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">cc&lt;=44 SAN (1D100&lt;=44) 獎勵・懲罰骰[0] ＞ 41 ＞ 41 ＞ 一般成功</span>
+                        </div></div><div class="log-item" data-index="335" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">cc&lt;=45 SAN (1D100&lt;=45) 獎勵・懲罰骰[0] ＞ 53 ＞ 53 ＞ 失敗<br>SAN :45 → 44</span>
+                        </div></div><div class="log-item" data-index="336" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"></span>
+                        </div></div><div class="log-item" data-index="337" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">好的。4125252外送來了一片嬰兒肉餅。甚至是活的——老天！日本人你們別這麼愛吃生食行不行！<br><br>陸天允眼急手快地重新關上了櫃門。</span>
+                        </div></div><div class="log-item" data-index="338" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">——不是說殺死了嗎？<br><br>北川展生驚得往後退了兩步。</span>
+                        </div></div><div class="log-item" data-index="339" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">後知後覺這次開門的鑰匙也不翼而飛，陸天允肉眼可見地耷拉下肩背，委屈地摸了摸空蕩蕩的鎖孔：「沒有鑰匙可以開其他門了……」</span>
+                        </div></div><div class="log-item" data-index="340" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「該走了吧。」北川展生有些生無可戀，這人還想開幾個門？</span>
+                        </div></div><div class="log-item" data-index="341" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「嗯，嘛。也只能這樣了……」除非現在從天上掉下兩把鑰匙讓他可以在走前再打開448跟463看一眼——不。一把就好！他想看448！</span>
+                        </div></div><div class="log-item" data-index="342" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">彷彿期待著什麼而又靜待片刻，最終一把新鑰匙也沒得到的陸天允只好拖沓著腳步去到對面的101號置物櫃，在北川展生的沉默凝視中開啟櫃門。</span>
+                        </div></div><div class="log-item" data-index="343" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">插入了鑰匙，打開了【101號】置物櫃。<br>瞬間從敞開的櫃門中猛然迸發出耀眼的白光，令你們一陣目眩。</span>
+                        </div></div><div class="log-item" data-index="344" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content"><br><br>............<br><br><br>........................<br><br><br></span>
+                        </div></div><div class="log-item" data-index="345" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">模糊的視野終於再次聚焦，你們發現自己正站在一處很難稱得上是乾淨的廁所前方。<br>在意識到之時猛地回頭，背後是一排櫃門皆已敞開的置物櫃。<br><br>如今那嬰孩的啼哭聲已然消失無蹤。</span>
+                        </div></div><div class="log-item" data-index="346" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">北川展生怔了一會，不太確定是否能放鬆了。<br><br>「……」<br>「……回來了吧？」</span>
+                        </div></div><div class="log-item" data-index="347" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">揉揉差點被亮到變得跟嬰兒怪物一樣瞎的眼睛，陸天允走進廁所幾步再走回原位，同意地點點頭：「嗯，回來了。」</span>
+                        </div></div><div class="log-item" data-index="348" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「太好了。」北川展聲發自內心地感嘆。<br>這趟確實收穫不少，但如果再讓他選一次，他會選擇待在家裡。新書的靈感再重要，也比不過自己的性命。<br><br>「對了，這些……」他看了看自己和陸天允身上的「遺物」，「我打算明天去一趟警局，由警察聯絡他們的家人應該最適合。」<br>「你要一起去嗎？」</span>
+                        </div></div><div class="log-item" data-index="349" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「哦，好啊。剛好我也有錄影可以幫忙作證——」<br><br>等等。應該不會出現什麼記錄都沒有的狀況吧？<br><br>陸天允頓時有些慌忙地拆下領口的鏡頭，打開手機連結APP後確認起錄影檔。</span>
+                        </div></div><div class="log-item" data-index="350" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">看來錄製的影片分毫不減地留存在你的資料夾之中。</span>
+                        </div></div><div class="log-item" data-index="351" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「怎麼樣，有錄到嗎？」他隨口問道。</span>
+                        </div></div><div class="log-item" data-index="352" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">稍微確認了下重要畫面都有錄到，陸天允將備份上傳到手機跟雲端後，向北川展生豎起了拇指：「哼哼～一幀不漏！」</span>
+                        </div></div><div class="log-item" data-index="353" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">「恭喜。」北川展生捧場地拍手。<br><br>「明天直接去車站附近的警局吧，回去大概很晚了，下午怎麼樣？」</span>
+                        </div></div><div class="log-item" data-index="354" draggable="false"><div class="log-line" style="color:#888888; ">
+                        
+                        <span class="text-content">「好啊，我明天剛好沒課。」<br>儘管還是有些不敢置信北川展生身為作家外出取材的時候竟然連錄影錄音都不做，陸天允還是乖乖地點頭答應，順道點開社交平台和人交換聯絡方式。<br>「那就先約一點半警局門口見，有什麼變動再隨時聯絡吧！」</span>
+                        </div></div><div class="log-item" data-index="355" draggable="false"><div class="log-line" style="color:#795548; ">
+                        
+                        <span class="text-content">隱約覺得陸天允又在想一些失禮的事，但北川展生沒多說什麼，只是點頭和他交換了帳號：｢好。｣</span>
+                        </div></div><div class="log-item" data-index="356" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">約定了碰面的日期，你們各自回到住處時已經是將近日出的時候了。<br><br>被這樣的詭異事件捲入並順利歸來，就算仍有各方對影片和你們的證詞抱持著存疑，卻又無奈沒有除此之外的線索，大平站的失蹤事件還是逐漸平息了。</span>
+                        </div></div><div class="log-item" data-index="357" draggable="false"><div class="log-line" style="color:#4a4a4a; ">
+                        
+                        <span class="text-content">從那之後，即便再度走近那個置物櫃，也再也沒聽見過嬰兒的哭泣聲了。<br>只是儘管如此，「大平站的置物櫃棄嬰」這個傳聞卻還在繼續流傳著。<br><br>或許那可憐的嬰孩至今仍然被孕育在那緊閉的置物櫃之中吧。</span>
+                        </div></div><br/><div class="log-item" data-index="358" draggable="false"><div class="log-line ending-text" style="color:#4a4a4a; text-align:center;font-weight:900;font-size:1.3em;margin:40px 0;padding:20px 15px;background:rgba(128,128,128,0.08);border-radius:10px;border-top:2px solid #4a4a4a;border-bottom:2px solid #4a4a4a;letter-spacing:3px;"><span class="text-content"><span style="font-size: 0.85em; opacity: 0.6;"><i>Ending 1【大平地鐵站的置物櫃棄嬰】</i></span></span></div></div></div>
+    </div></body></html>
